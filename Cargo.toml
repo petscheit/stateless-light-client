@@ -1,0 +1,33 @@
+[workspace]
+members = [
+    "src/crates/cairo_runner",
+    "src/crates/stone_verifier_hints",
+]
+exclude = ["tests"]
+resolver = "2"
+
+[workspace.dependencies]
+# Serialization
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = "1.0.133"
+
+# Cairo VM and Blockchain
+cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm", tag = "v2.1.0", features = ["extensive_hints", "clap", "cairo-1-hints", "mod_builtin"] }
+beacon_types = { git = "https://github.com/petscheit/lighthouse.git", package = "types", rev = "2ef065a16"}
+
+# Numeric
+num-bigint = "0.4.1"
+num-traits = "0.2.19"
+
+# Utils
+hex = "0.4.3"
+bincode = "2.0.1"
+
+# Error Handling & Logging
+thiserror = "2.0.9"
+tracing = "0.1.41"
+
+# Local Deps
+garaga_zero_hints = { path = "cairo/packages/garaga-zero/hints/rust-vm" }
+stone-verifier-hints = { path = "src/crates/stone_verifier_hints" }
+cairo-runner = { path = "src/crates/cairo_runner" }
