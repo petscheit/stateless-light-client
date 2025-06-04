@@ -63,7 +63,7 @@ func run_epoch_update{
         beacon_state_root=state_root,
         beacon_height=epoch_update.header.slot.low,
         n_signers=n_signers,
-        execution_header_root=execution_root,
+        execution_header_root=execution_hash,
         execution_header_height=execution_height,
         current_committee_hash=committee_hash,
     );

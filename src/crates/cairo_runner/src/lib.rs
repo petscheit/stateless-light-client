@@ -14,7 +14,7 @@ use cairo_vm::{
 };
 use error::Error;
 use hint_processor::CustomHintProcessor;
-use recursive_epoch::RecursiveEpochUpdate;
+use recursive_epoch::RecursiveEpochUpdateCairo;
 use std::io;
 use std::{io::Write, path::Path};
 
@@ -43,7 +43,7 @@ fn load_program(path: &str) -> Result<Program, Error> {
     Ok(program)
 }
 
-pub fn run(path: &str, update: RecursiveEpochUpdate) -> Result<CairoPie, Error> {
+pub fn run(path: &str, update: RecursiveEpochUpdateCairo) -> Result<CairoPie, Error> {
     let program = load_program(path)?;
     let cairo_run_config = cairo_run::CairoRunConfig {
         allow_missing_builtins: Some(true),
@@ -66,7 +66,7 @@ pub fn run(path: &str, update: RecursiveEpochUpdate) -> Result<CairoPie, Error> 
     Ok(pie)
 }
 
-pub fn run_stwo(path: &str, update: RecursiveEpochUpdate, output_dir: &str) -> Result<(), Error> {
+pub fn run_stwo(path: &str, update: RecursiveEpochUpdateCairo, output_dir: &str) -> Result<(), Error> {
     let program = load_program(path)?;
     let cairo_run_config = cairo_run::CairoRunConfig {
         allow_missing_builtins: None, // Optional

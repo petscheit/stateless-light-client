@@ -1,2 +1,6 @@
 /target
 venv/
+.env*
+.sqlx
+build
+.DS_Store

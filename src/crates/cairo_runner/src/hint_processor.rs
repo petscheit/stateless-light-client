@@ -1,6 +1,6 @@
 use std::{any::Any, collections::HashMap};
 
-use crate::recursive_epoch::RecursiveEpochUpdate;
+use crate::recursive_epoch::{RecursiveEpochUpdateCairo, HINT_WRITE_EXPECTED_PROOF_OUTPUT};
 use cairo_vm::{
     hint_processor::{
         builtin_hint_processor::builtin_hint_processor_definition::{
@@ -48,11 +48,11 @@ pub struct CustomHintProcessor {
     hints: HashMap<String, HintImpl>,
     // Add the builtin hint processor
     builtin_hint_proc: BuiltinHintProcessor,
-    pub recursive_epoch_update: RecursiveEpochUpdate,
+    pub recursive_epoch_update: RecursiveEpochUpdateCairo,
 }
 
 impl CustomHintProcessor {
-    pub fn new(recursive_epoch_update: RecursiveEpochUpdate) -> Self {
+    pub fn new(recursive_epoch_update: RecursiveEpochUpdateCairo) -> Self {
         Self {
             hints: Self::hints(),
             builtin_hint_proc: BuiltinHintProcessor::new_empty(),
@@ -146,7 +146,7 @@ impl CustomHintProcessor {
         hints.insert(debug::PRINT_FELT.into(), debug::print_felt);
         hints.insert(debug::PRINT_STRING.into(), debug::print_string);
         hints.insert(debug::PRINT_UINT384.into(), debug::print_uint384);
-
+    
         hints.insert(
             hints::HINT_CHECK_FORK_VERSION.into(),
             hints::hint_check_fork_version,
@@ -203,10 +203,14 @@ impl HintProcessorLogic for CustomHintProcessor {
                     self.write_epoch_update_inputs(vm, exec_scopes, hpd, constants)
                 }
                 HINT_WRITE_STARK_PROOF_INPUTS => {
+                    println!("Writing stark proof inputs1111");
                     self.write_stark_proof_inputs(vm, exec_scopes, hpd, constants)
                 }
                 HINT_WRITE_COMMITTEE_UPDATE_INPUTS => {
                     self.write_committee_update_inputs(vm, exec_scopes, hpd, constants)
+                }
+                HINT_WRITE_EXPECTED_PROOF_OUTPUT => {
+                    self.write_expected_proof_output(vm, exec_scopes, hpd, constants)
                 }
                 _ => Err(HintError::UnknownHint(
                     hint_code.to_string().into_boxed_str(),
@@ -230,7 +234,6 @@ impl HintProcessorLogic for CustomHintProcessor {
                 .map(|_| HintExtension::default());
         }
 
-        // For other hint types (like Cairo 1 hints), you might need additional handling here
         Err(HintError::WrongHintData)
     }
 }

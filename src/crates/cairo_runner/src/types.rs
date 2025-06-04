@@ -213,12 +213,12 @@ impl CairoType for Felt {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct G1CircuitPoint {
+pub struct G1PointCairo {
     x: UInt384,
     y: UInt384,
 }
 
-impl CairoType for G1CircuitPoint {
+impl CairoType for G1PointCairo {
     fn from_memory(vm: &VirtualMachine, address: Relocatable) -> Result<Self, HintError> {
         let x = UInt384::from_memory(vm, address)?;
         let y = UInt384::from_memory(vm, (address + 4)?)?;
@@ -241,14 +241,14 @@ impl CairoType for G1CircuitPoint {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct G2CircuitPoint {
+pub struct G2PointCairo {
     x0: UInt384,
     x1: UInt384,
     y0: UInt384,
     y1: UInt384,
 }
 
-impl CairoType for G2CircuitPoint {
+impl CairoType for G2PointCairo {
     fn from_memory(vm: &VirtualMachine, address: Relocatable) -> Result<Self, HintError> {
         let x0 = UInt384::from_memory(vm, address)?;
         let x1 = UInt384::from_memory(vm, (address + 4)?)?;

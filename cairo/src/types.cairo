@@ -44,3 +44,14 @@ struct EpochUpdateOutput {
     execution_header_height: felt,
     current_committee_hash: Uint256,
 }
+
+struct CircuitOutput {
+    beacon_header_root: Uint256,
+    beacon_state_root: Uint256,
+    beacon_height: felt,
+    n_signers: felt,
+    execution_header_root: Uint256,
+    execution_header_height: felt,
+    current_committee_hash: Uint256,
+    next_committee_hash: Uint256,
+}

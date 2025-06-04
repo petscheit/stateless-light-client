@@ -2,8 +2,9 @@ use std::collections::HashMap;
 
 use crate::{
     hint_processor::CustomHintProcessor,
-    types::{Bytes32, Felt, G1CircuitPoint, G2CircuitPoint, UInt384, Uint256, Uint256Bits32},
+    types::{Bytes32, Felt, G1PointCairo, G2PointCairo, UInt384, Uint256, Uint256Bits32},
 };
+use beacon_types::{ExecutionPayloadHeader, MainnetEthSpec};
 use cairo_vm::{
     hint_processor::builtin_hint_processor::{
         builtin_hint_processor_definition::HintProcessorData,
@@ -17,17 +18,17 @@ use cairo_vm::{
 };
 use garaga_zero::types::CairoType;
 use serde::Deserialize;
-
+use beacon_types::TreeHash;
 use serde_json::Value;
 
 #[derive(Debug, Deserialize)]
-pub struct RecursiveEpochUpdate {
-    pub inputs: RecursiveEpochUpdateInputs,
-    pub outputs: RecursiveEpochUpdateOutputs,
+pub struct RecursiveEpochUpdateCairo {
+    pub inputs: RecursiveEpochInputsCairo,
+    pub outputs: RecursiveEpochOutputsCairo,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct RecursiveEpochUpdateOutputs {
+pub struct RecursiveEpochOutputsCairo {
     pub beacon_header_root: Uint256,
     pub beacon_state_root: Uint256,
     pub beacon_height: Felt,
@@ -39,23 +40,24 @@ pub struct RecursiveEpochUpdateOutputs {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct RecursiveEpochUpdateInputs {
-    pub epoch_update: EpochUpdate,
-    pub sync_committee_update: Option<SyncCommitteeData>,
+pub struct RecursiveEpochInputsCairo {
+    pub epoch_update: EpochUpdateCairo,
+    pub sync_committee_update: Option<SyncCommitteeDataCairo>,
     pub stark_proof: Option<Value>, // this is the stark proof of the previous epoch update
+    pub stark_proof_output: Option<RecursiveEpochOutputsCairo>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct EpochUpdate {
-    pub header: BeaconHeader,
-    pub signature_point: G2CircuitPoint,
-    pub aggregate_pub: G1CircuitPoint,
-    pub non_signers: Vec<G1CircuitPoint>,
-    pub execution_header_proof: ExecutionHeaderProof,
+pub struct EpochUpdateCairo {
+    pub header: BeaconHeaderCairo,
+    pub signature_point: G2PointCairo,
+    pub aggregate_pub: G1PointCairo,
+    pub non_signers: Vec<G1PointCairo>,
+    pub execution_header_proof: ExecutionHeaderProofCairo,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct BeaconHeader {
+pub struct BeaconHeaderCairo {
     pub slot: Uint256,
     pub proposer_index: Uint256,
     pub parent_root: Uint256,
@@ -64,7 +66,7 @@ pub struct BeaconHeader {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct ExecutionHeaderProof {
+pub struct ExecutionHeaderProofCairo {
     pub root: Uint256,
     pub path: Vec<Uint256Bits32>,
     pub leaf: Uint256,
@@ -72,8 +74,76 @@ pub struct ExecutionHeaderProof {
     pub execution_payload_header: Vec<Bytes32>,
 }
 
+pub struct ExecutionPayloadHeaderCairo(pub ExecutionPayloadHeader<MainnetEthSpec>);
+impl ExecutionPayloadHeaderCairo {
+    pub fn to_field_roots(&self) -> Vec<Bytes32> {
+        // Helper function to convert any value to a padded 32-byte Uint256
+        fn to_uint256<T: AsRef<[u8]>>(bytes: T) -> Bytes32 {
+            let mut padded = vec![0; 32];
+            let bytes = bytes.as_ref();
+            // Copy bytes to the beginning of the padded array (right padding with zeros)
+            padded[..bytes.len()].copy_from_slice(bytes);
+            Bytes32::new(padded)
+        }
+
+        // Convert u64 to padded bytes
+        fn u64_to_uint256(value: u64) -> Bytes32 {
+            Bytes32::from_u64(value)
+        }
+
+        macro_rules! extract_common_fields {
+            ($h:expr) => {
+                vec![
+                    to_uint256($h.parent_hash.0.as_slice()),
+                    to_uint256($h.fee_recipient.0.to_vec()),
+                    to_uint256($h.state_root.0.to_vec()),
+                    to_uint256($h.receipts_root.0.to_vec()),
+                    to_uint256($h.logs_bloom.tree_hash_root().as_slice()),
+                    to_uint256($h.prev_randao.0.to_vec()),
+                    u64_to_uint256($h.block_number),
+                    u64_to_uint256($h.gas_limit),
+                    u64_to_uint256($h.gas_used),
+                    u64_to_uint256($h.timestamp),
+                    to_uint256($h.extra_data.tree_hash_root().as_slice()),
+                    to_uint256($h.base_fee_per_gas.tree_hash_root().as_slice()),
+                    to_uint256($h.block_hash.0.as_slice()),
+                    to_uint256($h.transactions_root.as_slice()),
+                ]
+            };
+        }
+
+        let roots = match &self.0 {
+            ExecutionPayloadHeader::Bellatrix(h) => extract_common_fields!(h),
+            ExecutionPayloadHeader::Capella(h) => {
+                let mut roots = extract_common_fields!(h);
+                roots.push(to_uint256(h.withdrawals_root.as_slice()));
+                roots
+            }
+            ExecutionPayloadHeader::Deneb(h) => {
+                let mut roots = extract_common_fields!(h);
+                roots.push(to_uint256(h.withdrawals_root.as_slice()));
+                roots.push(u64_to_uint256(h.blob_gas_used));
+                roots.push(u64_to_uint256(h.excess_blob_gas));
+                roots
+            }
+            ExecutionPayloadHeader::Electra(h) => {
+                // The execution payload is the same as Deneb
+                let mut roots = extract_common_fields!(h);
+                roots.push(to_uint256(h.withdrawals_root.as_slice()));
+                roots.push(u64_to_uint256(h.blob_gas_used));
+                roots.push(u64_to_uint256(h.excess_blob_gas));
+                roots
+            }
+            ExecutionPayloadHeader::Fulu(_h) => panic!("Fulu not supported"),
+        };
+
+        roots
+    }
+}
+
+
 #[derive(Debug, Deserialize)]
-pub struct SyncCommitteeData {
+pub struct SyncCommitteeDataCairo {
     pub beacon_slot: Felt,
     pub next_sync_committee_branch: Vec<Uint256Bits32>,
     pub next_aggregate_sync_committee: UInt384,
@@ -83,6 +153,7 @@ pub struct SyncCommitteeData {
 pub const HINT_WRITE_EPOCH_UPDATE_INPUTS: &str = r#"write_epoch_update_inputs()"#;
 pub const HINT_WRITE_STARK_PROOF_INPUTS: &str = r#"write_stark_proof_inputs()"#;
 pub const HINT_WRITE_COMMITTEE_UPDATE_INPUTS: &str = r#"write_committee_update_inputs()"#;
+pub const HINT_WRITE_EXPECTED_PROOF_OUTPUT: &str = r#"load_expected_proof_output()"#;
 
 impl CustomHintProcessor {
     pub fn write_epoch_update_inputs(
@@ -100,6 +171,58 @@ impl CustomHintProcessor {
             &hint_data.ap_tracking,
         )?;
         write_epoch_update(epoch_update_ptr, epoch_update, vm)?;
+
+        let is_genesis_ptr = get_relocatable_from_var_name(
+            "is_genesis",
+            vm,
+            &hint_data.ids_data,
+            &hint_data.ap_tracking,
+        )?;
+        let is_genesis = match &self.recursive_epoch_update.inputs.stark_proof {
+            Some(_) => 0,
+            None => 1,
+        };
+        vm.insert_value(is_genesis_ptr, Felt252::from(is_genesis))?;
+        
+        let program_hash_ptr = get_relocatable_from_var_name(
+            "program_hash",
+            vm,
+            &hint_data.ids_data,
+            &hint_data.ap_tracking,
+        )?;
+        let program_hash = Felt252::from_hex_unchecked("0x665a0214694abba6263234d0220376c6e7c07d8c469faccf218b3066553f394");
+        vm.insert_value(program_hash_ptr, program_hash)?;
+
+        Ok(())
+    }
+
+    pub fn write_expected_proof_output(
+        &self,
+        vm: &mut VirtualMachine,
+        _exec_scopes: &mut ExecutionScopes,
+        hint_data: &HintProcessorData,
+        _constants: &HashMap<String, Felt252>,
+    ) -> Result<(), HintError> {
+
+        let expected_output_ptr = get_relocatable_from_var_name(
+            "expected_proof_output",
+            vm,
+            &hint_data.ids_data,
+            &hint_data.ap_tracking,
+        )?;
+        
+        // Now write the struct data to the new segment
+        let values = &self.recursive_epoch_update.inputs.stark_proof_output.as_ref().unwrap();
+
+        let mut current_ptr = expected_output_ptr;
+        current_ptr = values.beacon_header_root.to_memory(vm, current_ptr)?;
+        current_ptr = values.beacon_state_root.to_memory(vm, current_ptr)?;
+        current_ptr = values.beacon_height.to_memory(vm, current_ptr)?;
+        current_ptr = values.n_signers.to_memory(vm, current_ptr)?;
+        current_ptr = values.execution_header_root.to_memory(vm, current_ptr)?;
+        current_ptr = values.execution_header_height.to_memory(vm, current_ptr)?;
+        current_ptr = values.current_committee_hash.to_memory(vm, current_ptr)?;
+        let _current_ptr = values.next_committee_hash.to_memory(vm, current_ptr)?;
 
         Ok(())
     }
@@ -193,7 +316,7 @@ impl CustomHintProcessor {
 
 pub fn write_epoch_update(
     epoch_update_ptr: Relocatable,
-    circuit_inputs: &EpochUpdate,
+    circuit_inputs: &EpochUpdateCairo,
     vm: &mut VirtualMachine,
 ) -> Result<Relocatable, HintError> {
     let mut current_ptr = epoch_update_ptr;
@@ -217,7 +340,7 @@ pub fn write_epoch_update(
 fn write_header_fields(
     vm: &mut VirtualMachine,
     mut ptr: Relocatable,
-    header: &BeaconHeader,
+    header: &BeaconHeaderCairo,
 ) -> Result<Relocatable, HintError> {
     ptr = header.slot.to_memory(vm, ptr)?;
     ptr = header.proposer_index.to_memory(vm, ptr)?;
@@ -230,7 +353,7 @@ fn write_header_fields(
 fn write_signer_data(
     vm: &mut VirtualMachine,
     mut ptr: Relocatable,
-    circuit_inputs: &EpochUpdate,
+    circuit_inputs: &EpochUpdateCairo,
 ) -> Result<Relocatable, HintError> {
     // Write aggregate public key
     ptr = circuit_inputs.aggregate_pub.to_memory(vm, ptr)?;
@@ -254,7 +377,7 @@ fn write_signer_data(
 fn write_execution_header_proof(
     vm: &mut VirtualMachine,
     mut ptr: Relocatable,
-    proof: &ExecutionHeaderProof,
+    proof: &ExecutionHeaderProofCairo,
 ) -> Result<Relocatable, HintError> {
     // Write root
     ptr = proof.root.to_memory(vm, ptr)?;
