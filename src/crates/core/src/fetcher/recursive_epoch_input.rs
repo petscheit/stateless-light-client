@@ -13,14 +13,14 @@ use crate::utils::hashing::get_committee_hash;
 use crate::{
     clients::beacon_chain::BeaconError, fetcher::execution_header_input::ExecutionHeaderProof,
 };
-
+use crate::fetcher::sync_committee_input::{SyncCommitteeData, SyncCommitteeValidatorPubs};
 use crate::clients::beacon_chain::BeaconRpcClient;
 // use crate::utils::{constants, hashing::get_committee_hash};
 use alloy_primitives::FixedBytes;
 use alloy_rpc_types_beacon::{
     events::light_client_finality::SyncAggregate, header::HeaderResponse,
 };
-use bls12_381::{G1Affine, G1Projective, G2Affine};
+use bls12_381::{G1Affine, G2Affine};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tracing::info;
@@ -93,28 +93,6 @@ pub struct BeaconHeader {
     pub body_root: FixedBytes<32>,
 }
 
-/// Represents the public keys of sync committee validators and their aggregate
-#[derive(Debug, Clone)]
-pub struct SyncCommitteeValidatorPubs {
-    /// Individual public keys of all validators in the committee
-    pub validator_pubs: Vec<G1Affine>,
-    /// Aggregated public key of all validators combined
-    pub aggregate_pub: G1Affine,
-}
-
-/// Contains sync committee update data for epoch transitions
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncCommitteeData {
-    /// Beacon chain slot number
-    pub beacon_slot: u64,
-    /// Merkle branch for next sync committee
-    pub next_sync_committee_branch: Vec<FixedBytes<32>>,
-    /// Aggregated public key of next sync committee
-    pub next_aggregate_sync_committee: FixedBytes<48>,
-    /// Root hash of committee keys
-    pub committee_keys_root: FixedBytes<32>,
-}
-
 impl From<RecursiveEpochInputs> for RecursiveEpochUpdate {
     fn from(val: RecursiveEpochInputs) -> Self {
         RecursiveEpochUpdate {
@@ -160,6 +138,7 @@ impl RecursiveEpochInputs {
 
         match latest_epoch_update {
             Some(update) => {
+
                 let slot = (update.epoch_number as u64 + 1)  * constants::SLOTS_PER_EPOCH + constants::SLOTS_PER_EPOCH - 1;
                 let epoch_update = EpochUpdate::generate_epoch_proof(client, slot).await?;
                 let stark_proof = match update.proof_id {
@@ -168,11 +147,23 @@ impl RecursiveEpochInputs {
                         serde_json::from_str(&proof.proof).unwrap()
                     }
                     None => panic!("No proof id found for epoch update"),
+                };                
+
+                let sync_committee_update = match update.outputs {
+                    Some(ref output) => {
+                        if output.next_committee_hash == FixedBytes::from([0u8; 32]) {
+                            let sync_committee_update = SyncCommitteeData::new(client, slot).await?;
+                            Some(sync_committee_update)
+                        } else {
+                            None
+                        }
+                    }
+                    None => None,
                 };
 
                 Ok(Self {
                     epoch_update,
-                    sync_committee_update: None,
+                    sync_committee_update: sync_committee_update,
                     stark_proof: Some(stark_proof),
                     stark_proof_output: update.outputs,
                 })
@@ -203,64 +194,6 @@ impl RecursiveEpochInputs {
         let json = fs::read_to_string(path)?;
         let inputs = serde_json::from_str(&json)?;
         Ok(inputs)
-    }
-}
-
-// impl Exportable for RecursiveEpochInputs { // Changed from EpochUpdate
-//     fn export(&self) -> Result<String, ProofError> {
-//         let json = serde_json::to_string_pretty(&self).unwrap();
-//         let dir_path = format!("batches/recursive_epoch/{}", self.epoch_update.header.slot); // Assuming header is in epoch_update
-//         fs::create_dir_all(dir_path.clone()).map_err(EpochUpdateError::Io)?;
-//         let path = format!(
-//             "{}/input_{}.json",
-//             dir_path, self.epoch_update.header.slot // Assuming header is in epoch_update
-//         );
-//         fs::write(path.clone(), json).map_err(EpochUpdateError::Io)?;
-//         Ok(path)
-//     }
-// }
-
-impl SyncCommitteeValidatorPubs {
-    /// Computes the committee hash used throughout the project
-    ///
-    /// # Returns
-    /// * `FixedBytes<32>` - Hash identifying the committee
-    pub fn get_committee_hash(&self) -> FixedBytes<32> {
-        get_committee_hash(self.aggregate_pub)
-    }
-}
-
-impl From<Vec<String>> for SyncCommitteeValidatorPubs {
-    /// Converts a vector of hex-encoded public key strings into `SyncCommitteeValidatorPubs`.
-    ///
-    /// # Arguments
-    ///
-    /// * `validator_pubs` - A vector of hex-encoded public key strings.
-    ///
-    /// # Returns
-    ///
-    /// A new `SyncCommitteeValidatorPubs` instance with parsed public keys.
-    fn from(validator_pubs: Vec<String>) -> Self {
-        let validator_pubs = validator_pubs
-            .iter()
-            .map(|s| {
-                let mut bytes = [0u8; 48];
-                let hex_str = s.trim_start_matches("0x");
-                hex::decode_to_slice(hex_str, &mut bytes).unwrap();
-                G1Affine::from_compressed(&bytes).unwrap()
-            })
-            .collect::<Vec<_>>();
-
-        // Aggregate all public keys into a single G1Projective point
-        let aggregate_pub = validator_pubs
-            .iter()
-            .fold(G1Projective::identity(), |acc, pubkey| {
-                acc.add_mixed(pubkey)
-            });
-        Self {
-            validator_pubs,
-            aggregate_pub: aggregate_pub.into(),
-        }
     }
 }
 
@@ -541,12 +474,6 @@ impl<'de> Deserialize<'de> for G2Point {
 /// Possible errors that can occur during epoch update operations
 #[derive(Debug, Error)]
 pub enum EpochUpdateError {
-    /// Error during Cairo program execution
-    // #[error("Cairo run error: {0}")]
-    // Cairo(#[from] CairoError),
-    /// Database operation error
-    // #[error("Database error: {0}")]
-    // Database(#[from] DatabaseError),
     /// File system operation error
     #[error("Io error: {0}")]
     Io(#[from] std::io::Error),
@@ -559,6 +486,9 @@ pub enum EpochUpdateError {
     /// Error processing execution header
     #[error("Execution header error: {0}")]
     ExecutionHeader(#[from] ExecutionHeaderError),
+    /// Error processing sync committee
+    #[error("Sync committee error: {0}")]
+    SyncCommittee(#[from] crate::fetcher::sync_committee_input::SyncCommitteeError),
     /// Invalid BLS cryptographic point
     #[error("Invalid BLS point")]
     InvalidBLSPoint,

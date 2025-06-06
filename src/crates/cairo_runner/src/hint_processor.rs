@@ -203,7 +203,6 @@ impl HintProcessorLogic for CustomHintProcessor {
                     self.write_epoch_update_inputs(vm, exec_scopes, hpd, constants)
                 }
                 HINT_WRITE_STARK_PROOF_INPUTS => {
-                    println!("Writing stark proof inputs1111");
                     self.write_stark_proof_inputs(vm, exec_scopes, hpd, constants)
                 }
                 HINT_WRITE_COMMITTEE_UPDATE_INPUTS => {

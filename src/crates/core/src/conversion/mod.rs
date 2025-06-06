@@ -3,7 +3,8 @@ use cairo_runner::{recursive_epoch::{BeaconHeaderCairo, EpochUpdateCairo, Execut
 use cairo_vm::Felt252;
 use num_bigint::BigUint;
 
-use crate::fetcher::recursive_epoch_input::{EpochUpdate, G1Point, G2Point, RecursiveEpochInputs, RecursiveEpochOutput, RecursiveEpochUpdate, SyncCommitteeData};
+use crate::fetcher::recursive_epoch_input::{EpochUpdate, G1Point, G2Point, RecursiveEpochInputs, RecursiveEpochOutput, RecursiveEpochUpdate};
+use crate::fetcher::sync_committee_input::SyncCommitteeData;
 
 impl From<RecursiveEpochUpdate> for RecursiveEpochUpdateCairo {
     fn from(val: RecursiveEpochUpdate) -> Self {

@@ -31,6 +31,8 @@ enum ProveCommands {
     Genesis,
     RecursiveEpoch {
         #[arg(long, short)]
+        simulate: bool,
+        #[arg(long, short)]
         export: Option<String>,
     },
 }
@@ -133,7 +135,8 @@ async fn main() -> Result<(), BankaiCliError> {
                     return Err(BankaiCliError::ProofGenerationError(error_msg));
                 }
             }
-            ProveCommands::RecursiveEpoch { export } => {
+            ProveCommands::RecursiveEpoch { simulate, export } => {
+
                 let prev_epoch = match bankai.db.get_latest_epoch_update().await.unwrap() {
                     Some(epoch_update) => epoch_update,
                     None => panic!("No previous epoch update found. Pls run genesis first"),
@@ -158,6 +161,15 @@ async fn main() -> Result<(), BankaiCliError> {
                     }
                 }
 
+                if simulate {
+                    let proof: RecursiveEpochUpdate = RecursiveEpochInputs::new(&bankai.client, &bankai.db)
+                        .await
+                        .unwrap()
+                        .into();
+                    println!("{}", serde_json::to_string_pretty(&proof.inputs.sync_committee_update).unwrap());
+                    return Ok(());
+                }
+
                 let proof: RecursiveEpochUpdate = RecursiveEpochInputs::new(&bankai.client, &bankai.db)
                     .await
                     .unwrap()
@@ -165,7 +177,6 @@ async fn main() -> Result<(), BankaiCliError> {
                 let epoch = proof.inputs.epoch_update.header.slot / SLOTS_PER_EPOCH;
                 println!("Epoch: {}", epoch);
                 let slot = proof.inputs.epoch_update.header.slot;
-                println!("Slot: {}", slot);
                 let uuid = bankai.db.create_epoch_update(epoch.clone(), slot, proof.outputs.clone()).await.unwrap();
 
                 // Wrap the proof generation and submission in error handling

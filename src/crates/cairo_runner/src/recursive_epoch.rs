@@ -183,6 +183,18 @@ impl CustomHintProcessor {
             None => 1,
         };
         vm.insert_value(is_genesis_ptr, Felt252::from(is_genesis))?;
+
+        let is_committee_update_ptr = get_relocatable_from_var_name(
+            "is_committee_update",
+            vm,
+            &hint_data.ids_data,
+            &hint_data.ap_tracking,
+        )?;
+        let is_committee_update = match &self.recursive_epoch_update.inputs.sync_committee_update {
+            Some(_) => 1,
+            None => 0,
+        };
+        vm.insert_value(is_committee_update_ptr, Felt252::from(is_committee_update))?;
         
         let program_hash_ptr = get_relocatable_from_var_name(
             "program_hash",
@@ -190,7 +202,7 @@ impl CustomHintProcessor {
             &hint_data.ids_data,
             &hint_data.ap_tracking,
         )?;
-        let program_hash = Felt252::from_hex_unchecked("0x665a0214694abba6263234d0220376c6e7c07d8c469faccf218b3066553f394");
+        let program_hash = Felt252::from_hex_unchecked("0x66a7442076920a7a58df4a416e0bbe81355ce7d1c3c98e70af1c93b96ab718d");
         vm.insert_value(program_hash_ptr, program_hash)?;
 
         Ok(())
@@ -257,14 +269,6 @@ impl CustomHintProcessor {
         if let Some(sync_committee_update) =
             &self.recursive_epoch_update.inputs.sync_committee_update
         {
-            let slot_ptr = get_relocatable_from_var_name(
-                "slot",
-                vm,
-                &hint_data.ids_data,
-                &hint_data.ap_tracking,
-            )?;
-            sync_committee_update.beacon_slot.to_memory(vm, slot_ptr)?;
-
             let aggregate_committee_key_ptr = get_relocatable_from_var_name(
                 "aggregate_committee_key",
                 vm,
