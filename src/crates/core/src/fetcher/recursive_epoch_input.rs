@@ -23,7 +23,7 @@ use alloy_rpc_types_beacon::{
 use bls12_381::{G1Affine, G2Affine};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use tracing::info;
+use tracing::{info, debug, error};
 use tree_hash::TreeHash;
 use tree_hash_derive::TreeHash;
 
@@ -105,16 +105,38 @@ impl From<RecursiveEpochInputs> for RecursiveEpochUpdate {
 impl From<RecursiveEpochInputs> for RecursiveEpochOutput {
     fn from(val: RecursiveEpochInputs) -> Self {
         let execution_header_hash = val.epoch_update.execution_header_proof.execution_payload_header.block_hash();
-        RecursiveEpochOutput {
+        println!("committee update: {:?}", val.sync_committee_update);
+
+
+        println!("beacon slot: {:?}", val.epoch_update.header.slot);
+        let (current_committee_hash, next_committee_hash) = if (val.epoch_update.header.slot + 1) % 8192 != 0 && val.stark_proof_output.is_some() {
+            println!("first case!");
+            match val.sync_committee_update {
+                None => (val.stark_proof_output.as_ref().unwrap().current_committee_hash, val.stark_proof_output.as_ref().unwrap().next_committee_hash),
+                Some(sync_committee_update) => (val.stark_proof_output.as_ref().unwrap().current_committee_hash, get_committee_hash(G1Affine::from_compressed(&sync_committee_update.next_aggregate_sync_committee).unwrap()))
+            }
+            
+        } else {
+            println!("second case!");
+            match val.stark_proof_output {
+                None => (get_committee_hash(val.epoch_update.aggregate_pub.0), FixedBytes::from([0u8; 32])),
+                Some(output) => (output.current_committee_hash, output.next_committee_hash)
+            }
+        };
+
+        println!("next_committee_hash: {:?}", next_committee_hash);
+        let out = RecursiveEpochOutput {
             beacon_header_root: val.epoch_update.header.tree_hash_root(),
             beacon_state_root: val.epoch_update.header.state_root,
             beacon_height: val.epoch_update.header.slot,
             n_signers: 512 - val.epoch_update.non_signers.len() as u64,
             execution_header_root: FixedBytes::from_slice(execution_header_hash.0.as_slice()),
             execution_header_height: val.epoch_update.execution_header_proof.execution_payload_header.block_number(),
-            current_committee_hash:  get_committee_hash(val.epoch_update.aggregate_pub.0),
-            next_committee_hash: FixedBytes::from([0u8; 32]),
-        }
+            current_committee_hash,
+            next_committee_hash,
+        };
+        println!("RecursiveEpochOutput: {:?}", out);
+        out
     }
 }
 
@@ -130,37 +152,70 @@ impl RecursiveEpochInputs {
     pub async fn new(
         client: &BeaconRpcClient,
         db: &crate::db::Database,
+        fast_forward: Option<u64>,
     ) -> Result<Self, EpochUpdateError> {
+        info!("🔍 Initializing recursive epoch inputs...");
+        
+        if let Some(ff) = fast_forward {
+            info!("⚡ Fast-forward option set: {} epochs", ff);
+        }
 
-        // Query database for latest epoch entry
+        info!("📊 Querying database for latest epoch update...");
         let latest_epoch_update = db.get_latest_epoch_update().await
             .map_err(|e| EpochUpdateError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
 
         match latest_epoch_update {
             Some(update) => {
-
-                let slot = (update.epoch_number as u64 + 1)  * constants::SLOTS_PER_EPOCH + constants::SLOTS_PER_EPOCH - 1;
+                info!("✅ Found existing epoch update - Epoch: {}, Slot: {}, UUID: {}", update.epoch_number, update.slot_number, update.uuid);
+                
+                let target_epoch = update.epoch_number as u64 + 1 + fast_forward.unwrap_or(0);
+                let slot = target_epoch * constants::SLOTS_PER_EPOCH + constants::SLOTS_PER_EPOCH - 1;
+                info!("🎯 Target epoch: {}, Target slot: {}", target_epoch, slot);
+                
+                info!("🏗️  Generating epoch update proof for slot {}...", slot);
                 let epoch_update = EpochUpdate::generate_epoch_proof(client, slot).await?;
+                info!("✅ Epoch update proof generated successfully");
+                
+                info!("🔍 Loading STARK proof from previous epoch...");
                 let stark_proof = match update.proof_id {
                     Some(proof_id) => {
-                        let proof = db.get_proof(proof_id).await.unwrap().unwrap();
-                        serde_json::from_str(&proof.proof).unwrap()
+                        debug!("📄 Found proof ID: {}", proof_id);
+                        let proof = db.get_proof(proof_id).await
+                            .map_err(|e| EpochUpdateError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?
+                            .ok_or_else(|| EpochUpdateError::Io(std::io::Error::new(std::io::ErrorKind::NotFound, "Proof not found in database")))?;
+                        
+                        serde_json::from_str(&proof.proof)
+                            .map_err(|e| EpochUpdateError::Deserialize(e))?
                     }
-                    None => panic!("No proof id found for epoch update"),
-                };                
+                    None => {
+                        return Err(EpochUpdateError::Io(std::io::Error::new(
+                            std::io::ErrorKind::InvalidData, 
+                            "No proof ID found for previous epoch update"
+                        )));
+                    }
+                };
+                info!("✅ STARK proof loaded successfully");
 
+                info!("🔍 Checking if sync committee update is needed...");
                 let sync_committee_update = match update.outputs {
                     Some(ref output) => {
                         if output.next_committee_hash == FixedBytes::from([0u8; 32]) {
+                            info!("🔄 Next committee hash is zero, generating sync committee update...");
                             let sync_committee_update = SyncCommitteeData::new(client, slot).await?;
+                            info!("✅ Sync committee update generated");
                             Some(sync_committee_update)
                         } else {
+                            info!("✅ Next committee hash already set, no sync committee update needed");
                             None
                         }
                     }
-                    None => None,
+                    None => {
+                        debug!("⚠️  No outputs found for previous epoch update");
+                        None
+                    }
                 };
 
+                info!("🎉 Recursive epoch inputs created successfully");
                 Ok(Self {
                     epoch_update,
                     sync_committee_update: sync_committee_update,
@@ -169,9 +224,15 @@ impl RecursiveEpochInputs {
                 })
             }
             None => {
-                let slot = constants::GENESIS_EPOCH  * constants::SLOTS_PER_EPOCH + constants::SLOTS_PER_EPOCH - 1;
-                let epoch_update = EpochUpdate::generate_epoch_proof(client, slot).await?;
+                info!("🏁 No previous epoch update found, creating genesis inputs...");
+                let slot = constants::GENESIS_EPOCH * constants::SLOTS_PER_EPOCH + constants::SLOTS_PER_EPOCH - 1;
+                info!("🎯 Genesis slot: {}", slot);
                 
+                info!("🏗️  Generating genesis epoch proof...");
+                let epoch_update = EpochUpdate::generate_epoch_proof(client, slot).await?;
+                info!("✅ Genesis epoch update proof generated successfully");
+                
+                info!("🎉 Genesis inputs created successfully");
                 Ok(Self {
                     epoch_update,
                     sync_committee_update: None,
@@ -210,48 +271,75 @@ impl EpochUpdate {
         client: &BeaconRpcClient,
         mut slot: u64,
     ) -> Result<EpochUpdate, EpochUpdateError> {
+        info!("🏗️  Starting epoch proof generation for slot {}", slot);
         let mut attempts = 0;
+        let original_slot = slot;
 
+        info!("📥 Fetching beacon header...");
         let header = loop {
+            debug!("🔍 Attempting to fetch header for slot {} (attempt {})", slot, attempts + 1);
             match client.get_header(slot).await {
-                Ok(header) => break header,
+                Ok(header) => {
+                    info!("✅ Successfully fetched header for slot {}", slot);
+                    if slot != original_slot {
+                        info!("ℹ️  Note: Skipped {} empty slots (from {} to {})", slot - original_slot, original_slot, slot);
+                    }
+                    break header;
+                },
                 Err(BeaconError::EmptySlot(_)) => {
                     attempts += 1;
                     if attempts >= constants::MAX_SKIPPED_SLOTS_RETRY_ATTEMPTS {
+                        let error_msg = format!("Exceeded maximum empty slot retry attempts ({}) starting from slot {}", 
+                                               constants::MAX_SKIPPED_SLOTS_RETRY_ATTEMPTS, original_slot);
                         return Err(EpochUpdateError::Client(
                             BeaconError::EmptySlot(slot).into(),
                         ));
                     }
                     slot += 1;
-                    info!(
-                        "Empty slot detected! Attempt {}/{}. Fetching slot: {}",
-                        attempts,
-                        constants::MAX_SKIPPED_SLOTS_RETRY_ATTEMPTS,
-                        slot
-                    );
+                    debug!("⚠️  Empty slot detected at {}! Attempt {}/{}. Trying next slot: {}", 
+                           slot - 1, attempts, constants::MAX_SKIPPED_SLOTS_RETRY_ATTEMPTS, slot);
                 }
-                Err(e) => return Err(EpochUpdateError::Client(e.into())), // Propagate other errors immediately
+                Err(e) => {
+                    error!("❌ Failed to fetch header for slot {}: {}", slot, e);
+                    return Err(EpochUpdateError::Client(e.into()));
+                }
             }
         };
 
+        info!("📥 Fetching sync aggregate for slot {}...", slot);
         let sync_agg = client
             .get_sync_aggregate(slot)
             .await
             .map_err(ClientError::Beacon)?;
+        info!("✅ Sync aggregate fetched successfully");
+
+        info!("📥 Fetching sync committee validator public keys...");
         let validator_pubs = client
             .get_sync_committee_validator_pubs(slot)
             .await
             .map_err(ClientError::Beacon)?;
-        // Process the sync committee data
-        let signature_point = Self::extract_signature_point(&sync_agg)?;
-        let non_signers = Self::derive_non_signers(&sync_agg, &validator_pubs);
+        info!("✅ Validator public keys fetched successfully ({} validators)", validator_pubs.validator_pubs.len());
 
+        info!("🔐 Processing BLS signature...");
+        let signature_point = Self::extract_signature_point(&sync_agg)?;
+        info!("✅ BLS signature point extracted successfully");
+
+        info!("🔍 Identifying non-signing validators...");
+        let non_signers = Self::derive_non_signers(&sync_agg, &validator_pubs);
+        let signers_count = validator_pubs.validator_pubs.len() - non_signers.len();
+        info!("✅ Found {} signers and {} non-signers", signers_count, non_signers.len());
+
+        info!("📋 Fetching execution header proof...");
+        let execution_header_proof = ExecutionHeaderProof::fetch_proof(client, slot).await?;
+        info!("✅ Execution header proof fetched successfully");
+
+        info!("🎉 Epoch proof generation completed successfully for slot {}", slot);
         Ok(EpochUpdate {
             header: header.into(),
             signature_point,
             aggregate_pub: G1Point(validator_pubs.aggregate_pub),
             non_signers: non_signers.iter().map(|p| G1Point(*p)).collect(),
-            execution_header_proof: ExecutionHeaderProof::fetch_proof(client, slot).await?,
+            execution_header_proof,
         })
     }
 

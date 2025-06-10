@@ -16,8 +16,10 @@ from cairo.src.types import EpochUpdate, EpochUpdateOutput, CircuitOutput
 from cairo.src.verify_epoch import run_epoch_update
 from starkware.cairo.stark_verifier.core.stark import StarkProof
 from cairo.src.committee_update import run_committee_update
+from cairo.src.utils import felt_divmod
 
 const BOOTLOADER_PROGRAM_HASH = 0x5AB580B04E3532B6B18F81CFA654A05E29DD8E2352D88DF1E765A84072DB07;
+const SYNC_COMMITTEE_PERIOD = 8192;
 
 func main{
     output_ptr: felt*,
@@ -36,7 +38,7 @@ func main{
 
     local epoch_update: EpochUpdate;
     local is_genesis: felt;
-    local is_committee_update: felt;
+    local is_committee_update: felt; // do we add a new committee? 1 if yes, 0 if no
     local program_hash: felt;
     %{ write_epoch_update_inputs() %}
 
@@ -45,11 +47,27 @@ func main{
             let (epoch_update_output) = handle_genesis_case(epoch_update);
         }
         let next_committee_hash = Uint256(low=0x0, high=0x0);
-        write_circuit_output(epoch_output=epoch_update_output, next_committee_hash=next_committee_hash);
+        assert is_committee_update = 0;
+        write_circuit_output(epoch_output=epoch_update_output, next_committee_hash=next_committee_hash, is_committee_transition=0);
+
+        SHA256.finalize(sha256_start_ptr=sha256_ptr_start, sha256_end_ptr=sha256_ptr);
+
         return ();
     } else {
+        print_string('recursive case');
+
+        let (_, remainder) = felt_divmod(epoch_update.header.slot.low + 1, SYNC_COMMITTEE_PERIOD);
+        local is_committee_transition: felt;
+        if (remainder == 0) {
+            is_committee_transition = 1;
+        } else {
+            is_committee_transition = 0;
+        }
+        print_string('is_committee_transition');
+        print_felt_hex(is_committee_transition);
+
         with pow2_array, sha256_ptr {
-            let (epoch_update_output, next_committee_hash) = handle_recursive_case(epoch_update, program_hash);
+            let (epoch_update_output, next_committee_hash) = handle_recursive_case(epoch_update, program_hash, is_committee_transition);
         }
         print_string('confirmed epoch');
 
@@ -79,13 +97,13 @@ func main{
             // Ensure a valid state root is used to decommit new next_committee_hash
             assert epoch_update_output.beacon_state_root.low = state_root.low;
             assert epoch_update_output.beacon_state_root.high = state_root.high;
-            write_circuit_output(epoch_output=epoch_update_output, next_committee_hash=new_next_committee_hash);
+            write_circuit_output(epoch_output=epoch_update_output, next_committee_hash=new_next_committee_hash, is_committee_transition=is_committee_transition);
 
             SHA256.finalize(sha256_start_ptr=sha256_ptr_start, sha256_end_ptr=sha256_ptr);
             return ();
         } else {
             print_string('no committee update');
-            write_circuit_output(epoch_output=epoch_update_output, next_committee_hash=next_committee_hash);
+            write_circuit_output(epoch_output=epoch_update_output, next_committee_hash=next_committee_hash, is_committee_transition=is_committee_transition);
             
             SHA256.finalize(sha256_start_ptr=sha256_ptr_start, sha256_end_ptr=sha256_ptr);
             return ();
@@ -104,17 +122,58 @@ func handle_recursive_case{
     mul_mod_ptr: ModBuiltin*,
     sha256_ptr: felt*,
     pow2_array: felt*,
-}(epoch_update: EpochUpdate, program_hash: felt) -> (EpochUpdateOutput, Uint256) {
+}(epoch_update: EpochUpdate, program_hash: felt, is_committee_transition: felt) -> (EpochUpdateOutput, Uint256) {
     alloc_locals;
 
     let (epoch_update_output) = run_epoch_update(epoch_update);
+    print_string('epoch update output');
 
     local expected_proof_output: CircuitOutput;
     %{ load_expected_proof_output() %}
 
+
     // Check that expected matches the committee hash that was used to sign
-    assert expected_proof_output.current_committee_hash.low = epoch_update_output.current_committee_hash.low;
-    assert expected_proof_output.current_committee_hash.high = epoch_update_output.current_committee_hash.high;
+
+    if (is_committee_transition == 1) {
+        print_string('exp com');
+        print_felt_hex(expected_proof_output.next_committee_hash.low);
+        print_felt_hex(expected_proof_output.next_committee_hash.high);
+
+        print_string('epoch update output');
+        print_felt_hex(epoch_update_output.current_committee_hash.low);
+        print_felt_hex(epoch_update_output.current_committee_hash.high);
+        assert expected_proof_output.next_committee_hash.low = epoch_update_output.current_committee_hash.low;
+        assert expected_proof_output.next_committee_hash.high = epoch_update_output.current_committee_hash.high;
+    } else {
+        print_string('exp com');
+        print_felt_hex(expected_proof_output.current_committee_hash.low);
+        print_felt_hex(expected_proof_output.current_committee_hash.high);
+
+        print_string('epoch update output');
+        print_felt_hex(epoch_update_output.current_committee_hash.low);
+        print_felt_hex(epoch_update_output.current_committee_hash.high);
+        assert expected_proof_output.current_committee_hash.low = epoch_update_output.current_committee_hash.low;
+        assert expected_proof_output.current_committee_hash.high = epoch_update_output.current_committee_hash.high;
+    }
+
+    print_string('checked committee hash');
+
+    print_string('program hash');
+    print_felt_hex(program_hash);
+
+    print_felt_hex(expected_proof_output.beacon_header_root.low);
+    print_felt_hex(expected_proof_output.beacon_header_root.high);
+    print_felt_hex(expected_proof_output.beacon_state_root.low);
+    print_felt_hex(expected_proof_output.beacon_state_root.high);
+    print_felt_hex(expected_proof_output.beacon_height);
+    print_felt_hex(expected_proof_output.n_signers);
+    print_felt_hex(expected_proof_output.execution_header_root.low);
+    print_felt_hex(expected_proof_output.execution_header_root.high);
+    print_felt_hex(expected_proof_output.execution_header_height);
+    print_felt_hex(expected_proof_output.current_committee_hash.low);
+    print_felt_hex(expected_proof_output.current_committee_hash.high);
+    print_felt_hex(expected_proof_output.next_committee_hash.low);
+    print_felt_hex(expected_proof_output.next_committee_hash.high);
 
     // Construct the expected verifier output
     tempvar expected_verifier_output = cast(
@@ -137,9 +196,19 @@ func handle_recursive_case{
     );
 
     let (expected_output_hash: felt) = poseidon_hash_many(n=16, elements=expected_verifier_output);
+    print_string('expected output hash');
+    print_felt_hex(expected_output_hash);
+
+
 
     %{ write_stark_proof_inputs() %}
     let (proof_program_hash, output_hash) = verify_cairo_proof();
+
+    print_string('output hash');
+    print_felt_hex(output_hash);
+
+    print_string('proof program hash');
+    print_felt_hex(proof_program_hash);
 
     // Ensure the proof contains the expected values
     assert output_hash = expected_output_hash;    
@@ -171,10 +240,10 @@ func handle_genesis_case{
     return (epoch_update_output=epoch_update_output);
 }
 
-
 func write_circuit_output{
     output_ptr: felt*,
-}(epoch_output: EpochUpdateOutput, next_committee_hash: Uint256) {
+    range_check_ptr,
+}(epoch_output: EpochUpdateOutput, next_committee_hash: Uint256, is_committee_transition: felt) {
     assert [output_ptr] = epoch_output.beacon_header_root.low;
     assert [output_ptr + 1] = epoch_output.beacon_header_root.high;
     assert [output_ptr + 2] = epoch_output.beacon_state_root.low;
@@ -184,10 +253,22 @@ func write_circuit_output{
     assert [output_ptr + 6] = epoch_output.execution_header_root.low;
     assert [output_ptr + 7] = epoch_output.execution_header_root.high;
     assert [output_ptr + 8] = epoch_output.execution_header_height;
-    assert [output_ptr + 9] = epoch_output.current_committee_hash.low;
-    assert [output_ptr + 10] = epoch_output.current_committee_hash.high;
-    assert [output_ptr + 11] = next_committee_hash.low;
-    assert [output_ptr + 12] = next_committee_hash.high;
+
+    if (is_committee_transition == 1) {
+        print_string('committee update');
+        assert [output_ptr + 9] = next_committee_hash.low;
+        assert [output_ptr + 10] = next_committee_hash.high;
+        assert [output_ptr + 11] = 0x0;
+        assert [output_ptr + 12] = 0x0;
+        tempvar range_check_ptr = range_check_ptr;
+    } else {
+        print_string('no committee update');
+        assert [output_ptr + 9] = epoch_output.current_committee_hash.low;
+        assert [output_ptr + 10] = epoch_output.current_committee_hash.high;
+        assert [output_ptr + 11] = next_committee_hash.low;
+        assert [output_ptr + 12] = next_committee_hash.high;
+        tempvar range_check_ptr = range_check_ptr;
+    }
 
     print_string('output_ptr');
     print_felt_hex(output_ptr[0]);
@@ -205,8 +286,5 @@ func write_circuit_output{
     print_felt_hex(output_ptr[12]);
 
     let output_ptr = output_ptr + 13;
-
     return ();
-
 }
-
