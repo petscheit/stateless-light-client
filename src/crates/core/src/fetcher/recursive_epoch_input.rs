@@ -109,19 +109,20 @@ impl From<RecursiveEpochInputs> for RecursiveEpochOutput {
 
 
         println!("beacon slot: {:?}", val.epoch_update.header.slot);
-        let (current_committee_hash, next_committee_hash) = if (val.epoch_update.header.slot + 1) % 8192 != 0 && val.stark_proof_output.is_some() {
-            println!("first case!");
-            match val.sync_committee_update {
-                None => (val.stark_proof_output.as_ref().unwrap().current_committee_hash, val.stark_proof_output.as_ref().unwrap().next_committee_hash),
-                Some(sync_committee_update) => (val.stark_proof_output.as_ref().unwrap().current_committee_hash, get_committee_hash(G1Affine::from_compressed(&sync_committee_update.next_aggregate_sync_committee).unwrap()))
+
+        let (current_committee_hash, next_committee_hash) = if val.stark_proof_output.is_some() {
+            if (val.epoch_update.header.slot + 1) % 8192 != 0 {
+                println!("No sync committee transition");
+                match val.sync_committee_update {
+                    None => (val.stark_proof_output.as_ref().unwrap().current_committee_hash, val.stark_proof_output.as_ref().unwrap().next_committee_hash),
+                    Some(sync_committee_update) => (val.stark_proof_output.as_ref().unwrap().current_committee_hash, get_committee_hash(G1Affine::from_compressed(&sync_committee_update.next_aggregate_sync_committee).unwrap()))
+                }
+            } else {
+                println!("Sync committee transition");
+                (val.stark_proof_output.as_ref().unwrap().next_committee_hash, FixedBytes::from([0u8; 32]))
             }
-            
         } else {
-            println!("second case!");
-            match val.stark_proof_output {
-                None => (get_committee_hash(val.epoch_update.aggregate_pub.0), FixedBytes::from([0u8; 32])),
-                Some(output) => (output.current_committee_hash, output.next_committee_hash)
-            }
+            (get_committee_hash(val.epoch_update.aggregate_pub.0), FixedBytes::from([0u8; 32]))
         };
 
         println!("next_committee_hash: {:?}", next_committee_hash);
