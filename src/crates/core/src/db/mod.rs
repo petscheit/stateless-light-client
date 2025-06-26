@@ -235,4 +235,40 @@ impl Database {
         let updates = rows.into_iter().map(EpochUpdate::from).collect();
         Ok(updates)
     }
+
+    pub async fn get_proof_by_beacon_height(
+        &self,
+        height: u64,
+    ) -> Result<Option<Proof>, sqlx::Error> {
+        let height_i64 = height as i64;
+        let proof = sqlx::query_as(
+            "SELECT p.id, p.proof
+             FROM proofs p
+             JOIN epoch_updates eu ON p.id = eu.proof_id
+             WHERE json_extract(eu.outputs, '$.beacon_height') = ?",
+        )
+        .bind(height_i64)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(proof)
+    }
+
+    pub async fn get_proof_by_execution_height(
+        &self,
+        height: u64,
+    ) -> Result<Option<Proof>, sqlx::Error> {
+        let height_i64 = height as i64;
+        let proof = sqlx::query_as(
+            "SELECT p.id, p.proof
+             FROM proofs p
+             JOIN epoch_updates eu ON p.id = eu.proof_id
+             WHERE json_extract(eu.outputs, '$.execution_header_height') = ?",
+        )
+        .bind(height_i64)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(proof)
+    }
 }

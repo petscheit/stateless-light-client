@@ -24,7 +24,10 @@ async fn main() {
 
     info!("🚀 Starting Bankai API server at 127.0.0.1:3030");
 
-    let api = epochs_route(db.clone()).or(proof_route(db));
+    let api = epochs_route(db.clone())
+        .or(proof_route(db.clone()))
+        .or(get_beacon_route(db.clone()))
+        .or(get_execution_route(db));
     warp::serve(api).run(([127, 0, 0, 1], 3030)).await;
 }
 
@@ -48,6 +51,22 @@ fn proof_route(db: Db) -> impl Filter<Extract = impl Reply, Error = Rejection> +
         .and_then(get_proof)
 }
 
+// GET /beacon/:height
+fn get_beacon_route(db: Db) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    warp::path!("beacon" / u64)
+        .and(warp::get())
+        .and(with_db(db))
+        .and_then(get_proof_by_beacon_height)
+}
+
+// GET /execution/:height
+fn get_execution_route(db: Db) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+    warp::path!("execution" / u64)
+        .and(warp::get())
+        .and(with_db(db))
+        .and_then(get_proof_by_execution_height)
+}
+
 async fn get_all_epoch_updates(db: Db) -> Result<impl Reply, Rejection> {
     match db.get_all_epoch_updates().await {
         Ok(epochs) => Ok(json(&epochs)),
@@ -68,6 +87,36 @@ async fn get_proof(id: i64, db: Db) -> Result<impl Reply, Rejection> {
         Ok(None) => Err(warp::reject::not_found()),
         Err(e) => {
             error!("Error fetching proof {}: {}", id, e);
+            Err(warp::reject::custom(DatabaseError))
+        }
+    }
+}
+
+async fn get_proof_by_beacon_height(height: u64, db: Db) -> Result<impl Reply, Rejection> {
+    match db.get_proof_by_beacon_height(height).await {
+        Ok(Some(proof)) => {
+            let proof_json: serde_json::Value =
+                serde_json::from_str(&proof.proof).map_err(|_| warp::reject::custom(JsonParseError))?;
+            Ok(json(&proof_json))
+        }
+        Ok(None) => Err(warp::reject::not_found()),
+        Err(e) => {
+            error!("Error fetching proof by beacon height {}: {}", height, e);
+            Err(warp::reject::custom(DatabaseError))
+        }
+    }
+}
+
+async fn get_proof_by_execution_height(height: u64, db: Db) -> Result<impl Reply, Rejection> {
+    match db.get_proof_by_execution_height(height).await {
+        Ok(Some(proof)) => {
+            let proof_json: serde_json::Value =
+                serde_json::from_str(&proof.proof).map_err(|_| warp::reject::custom(JsonParseError))?;
+            Ok(json(&proof_json))
+        }
+        Ok(None) => Err(warp::reject::not_found()),
+        Err(e) => {
+            error!("Error fetching proof by execution height {}: {}", height, e);
             Err(warp::reject::custom(DatabaseError))
         }
     }

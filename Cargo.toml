@@ -4,7 +4,7 @@ members = [
     "src/crates/stone_verifier_hints",
     "src/crates/core",
     "src/crates/cli",
-    "src/crates/decommit",
+    "src/crates/shikai",
     "src/crates/api"
 ]
 exclude = ["tests"]
