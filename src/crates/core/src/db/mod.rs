@@ -14,7 +14,7 @@ pub enum Status {
     Error,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize)]
 pub struct EpochUpdate {
     pub uuid: String,
     pub epoch_number: i64,
@@ -221,5 +221,18 @@ impl Database {
         .await?;
 
         Ok(proof)
+    }
+
+    pub async fn get_all_epoch_updates(&self) -> Result<Vec<EpochUpdate>, sqlx::Error> {
+        let rows = sqlx::query_as::<_, EpochUpdateRow>(
+            "SELECT uuid, epoch_number, slot_number, outputs, atlantic_id, proof_id, status, error_reason 
+             FROM epoch_updates 
+             ORDER BY slot_number DESC"
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let updates = rows.into_iter().map(EpochUpdate::from).collect();
+        Ok(updates)
     }
 }

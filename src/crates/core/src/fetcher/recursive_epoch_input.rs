@@ -290,7 +290,7 @@ impl EpochUpdate {
                 Err(BeaconError::EmptySlot(_)) => {
                     attempts += 1;
                     if attempts >= constants::MAX_SKIPPED_SLOTS_RETRY_ATTEMPTS {
-                        let error_msg = format!("Exceeded maximum empty slot retry attempts ({}) starting from slot {}", 
+                        let _error_msg = format!("Exceeded maximum empty slot retry attempts ({}) starting from slot {}", 
                                                constants::MAX_SKIPPED_SLOTS_RETRY_ATTEMPTS, original_slot);
                         return Err(EpochUpdateError::Client(
                             BeaconError::EmptySlot(slot).into(),
