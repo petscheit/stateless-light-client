@@ -233,7 +233,7 @@ impl RecursiveEpochInputs {
                             })?;
 
                         serde_json::from_str(&proof.proof)
-                            .map_err(|e| EpochUpdateError::Deserialize(e))?
+                            .map_err(EpochUpdateError::Deserialize)?
                     }
                     None => {
                         return Err(EpochUpdateError::Io(std::io::Error::new(
@@ -267,7 +267,7 @@ impl RecursiveEpochInputs {
                 info!("🎉 Recursive epoch inputs created successfully");
                 Ok(Self {
                     epoch_update,
-                    sync_committee_update: sync_committee_update,
+                    sync_committee_update,
                     stark_proof: Some(stark_proof),
                     stark_proof_output: update.outputs,
                 })

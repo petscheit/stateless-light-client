@@ -14,6 +14,7 @@ async fn main() {
     );
 
     let execution_header = shikai.fetch_execution_header(block_number).await.unwrap();
-    
+    println!("Shikai Execution Header: {:?}", execution_header.0);
     let beacon_header = shikai.fetch_beacon_header(slot_number).await.unwrap();
+    println!("Shikai Beacon Header: {:?}", beacon_header.0);
 }

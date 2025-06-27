@@ -1,10 +1,7 @@
 // beacon fetcher
 
-use alloy_rpc_types_beacon::header::{Header, HeaderResponse};
+use alloy_rpc_types_beacon::header::HeaderResponse;
 pub use bankai_core::fetcher::recursive_epoch_input::BeaconHeader;
-use serde::{Deserialize, Serialize};
-use tree_hash::TreeHash;
-use tree_hash_derive::TreeHash;
 
 use crate::error::Error;
 pub struct BeaconFetcher {

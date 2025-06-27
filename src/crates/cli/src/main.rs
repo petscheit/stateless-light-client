@@ -2,7 +2,7 @@ use bankai_core::{
     db::Status,
     fetcher::recursive_epoch_input::{RecursiveEpochInputs, RecursiveEpochUpdate},
     utils::{
-        constants::{GENESIS_EPOCH, SLOTS_PER_EPOCH},
+        constants::SLOTS_PER_EPOCH,
         hashing::get_committee_hash,
     },
     BankaiClient,
@@ -166,7 +166,7 @@ async fn main() -> Result<(), BankaiCliError> {
 
                 let uuid = bankai
                     .db
-                    .create_epoch_update(epoch.clone(), slot, proof.outputs.clone())
+                    .create_epoch_update(epoch, slot, proof.outputs.clone())
                     .await
                     .map_err(|e| {
                         BankaiCliError::ProofGenerationError(format!(
@@ -369,7 +369,7 @@ async fn main() -> Result<(), BankaiCliError> {
 
                 let uuid = bankai
                     .db
-                    .create_epoch_update(epoch.clone(), slot, proof.outputs.clone())
+                    .create_epoch_update(epoch, slot, proof.outputs.clone())
                     .await
                     .map_err(|e| {
                         BankaiCliError::ProofGenerationError(format!(
