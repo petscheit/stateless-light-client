@@ -1,10 +1,7 @@
 use bankai_core::{
     db::Status,
     fetcher::recursive_epoch_input::{RecursiveEpochInputs, RecursiveEpochUpdate},
-    utils::{
-        constants::SLOTS_PER_EPOCH,
-        hashing::get_committee_hash,
-    },
+    utils::{constants::SLOTS_PER_EPOCH, hashing::get_committee_hash},
     BankaiClient,
 };
 use clap::{Parser, Subcommand};

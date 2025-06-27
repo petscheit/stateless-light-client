@@ -232,8 +232,7 @@ impl RecursiveEpochInputs {
                                 ))
                             })?;
 
-                        serde_json::from_str(&proof.proof)
-                            .map_err(EpochUpdateError::Deserialize)?
+                        serde_json::from_str(&proof.proof).map_err(EpochUpdateError::Deserialize)?
                     }
                     None => {
                         return Err(EpochUpdateError::Io(std::io::Error::new(

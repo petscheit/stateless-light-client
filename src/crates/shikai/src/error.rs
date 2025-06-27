@@ -18,4 +18,6 @@ pub enum Error {
     Reqwest(#[from] reqwest::Error),
     #[error("Block not found")]
     BlockNotFound,
+    #[error("Trie proof verification failed")]
+    TrieProofVerification(#[from] alloy_trie::proof::ProofVerificationError),
 }

@@ -24,6 +24,8 @@ alloy-rpc-types.workspace = true
 alloy-provider.workspace = true
 alloy-network.workspace = true
 alloy-consensus.workspace = true
+alloy-trie.workspace = true
+alloy-rlp.workspace = true
 starknet-core.workspace = true
 reqwest = { workspace = true, features = ["json"] }
 serde = { workspace = true, features = ["derive"] }
