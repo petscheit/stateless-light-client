@@ -1,2 +1,2 @@
-pub mod verify;
 mod transform;
+pub mod verify;

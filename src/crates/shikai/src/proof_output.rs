@@ -20,7 +20,12 @@ impl RecursiveEpochOutput {
     pub fn from_proof_output(proof_output: Vec<Felt>) -> Result<Self, Error> {
         let program_hash = proof_output[2];
         // Ensure we used the correct Bankai cairo program
-        assert_eq!(program_hash, Felt::from_hex_unchecked("0x5b6ff167e72599c14a2e99cac4a6e8db3036db0f0d9acac15d5822ea315287a"));
+        assert_eq!(
+            program_hash,
+            Felt::from_hex_unchecked(
+                "0x5b6ff167e72599c14a2e99cac4a6e8db3036db0f0d9acac15d5822ea315287a"
+            )
+        );
 
         let epoch_output = RecursiveEpochOutput {
             beacon_header_root: felts_to_bytes32(&proof_output[3], &proof_output[4]),

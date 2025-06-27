@@ -5758,6 +5758,7 @@ dependencies = [
  "alloy-provider",
  "alloy-rpc-types",
  "alloy-rpc-types-beacon",
+ "bankai-core",
  "dotenv",
  "reqwest 0.12.19",
  "serde",
@@ -5774,6 +5775,8 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "tree_hash",
+ "tree_hash_derive",
  "url",
 ]
 

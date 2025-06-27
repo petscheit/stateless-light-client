@@ -1,14 +1,19 @@
+use dotenv::from_filename;
 use shikai::Shikai;
 
 #[tokio::main]
 async fn main() {
+    from_filename(".env.local").ok();
+
     let block_number = 8457416;
-    println!("Verifying header for block: {}", block_number);
-    let shikai = Shikai::new("https://sepolia.drpc.org".to_string());
+    let slot_number = 7815231;
 
-    let header = shikai.fetch_execution_header(block_number).await.unwrap();
+    let shikai = Shikai::new(
+        std::env::var("EXECUTION_RPC_URL").unwrap(),
+        std::env::var("BEACON_RPC_URL").unwrap(),
+    );
 
-    println!("Shikai Header: {:?}", header.0);
-
-
+    let execution_header = shikai.fetch_execution_header(block_number).await.unwrap();
+    
+    let beacon_header = shikai.fetch_beacon_header(slot_number).await.unwrap();
 }

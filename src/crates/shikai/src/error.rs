@@ -1,4 +1,3 @@
-use crate::retrieve;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -13,8 +12,6 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
-    #[error("Header retrieve error: {0}")]
-    Retrieve(#[from] retrieve::Error),
     #[error("URL parse error: {0}")]
     UrlParse(#[from] url::ParseError),
     #[error("Reqwest error: {0}")]

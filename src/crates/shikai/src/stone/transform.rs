@@ -71,7 +71,9 @@ impl TransformTo<StarkConfigVerifier> for stark_proof::StarkConfig {
 
 impl TransformTo<PowConfigVerifier> for stark_proof::ProofOfWorkConfig {
     fn transform_to(self) -> PowConfigVerifier {
-        PowConfigVerifier { n_bits: self.n_bits as u8 }
+        PowConfigVerifier {
+            n_bits: self.n_bits as u8,
+        }
     }
 }
 
@@ -80,7 +82,11 @@ impl TransformTo<FriConfigVerifier> for stark_proof::FriConfig {
         FriConfigVerifier {
             log_input_size: self.log_input_size.into(),
             n_layers: self.n_layers.into(),
-            inner_layers: self.inner_layers.into_iter().map(|x| x.transform_to()).collect(),
+            inner_layers: self
+                .inner_layers
+                .into_iter()
+                .map(|x| x.transform_to())
+                .collect(),
             fri_step_sizes: self.fri_step_sizes.into_iter().map(|x| x.into()).collect(),
             log_last_layer_degree_bound: self.log_last_layer_degree_bound.into(),
         }
@@ -98,7 +104,10 @@ impl TransformTo<TraceConfigVerifier> for stark_proof::TracesConfig {
 
 impl TransformTo<TableConfigVerifier> for stark_proof::TableCommitmentConfig {
     fn transform_to(self) -> TableConfigVerifier {
-        TableConfigVerifier { n_columns: self.n_columns.into(), vector: self.vector.transform_to() }
+        TableConfigVerifier {
+            n_columns: self.n_columns.into(),
+            vector: self.vector.transform_to(),
+        }
     }
 }
 
@@ -129,10 +138,19 @@ impl TransformTo<PublicInputVerifier> for stark_proof::PublicInput {
             range_check_max: self.range_check_max.into(),
             layout: self.layout.into(),
             dynamic_params,
-            segments: self.segments.into_iter().map(|x| x.transform_to()).collect(),
+            segments: self
+                .segments
+                .into_iter()
+                .map(|x| x.transform_to())
+                .collect(),
             padding_addr: self.padding_addr.into(),
             padding_value: self.padding_value.into(),
-            main_page: Page(self.main_page.into_iter().map(|x| x.transform_to()).collect()),
+            main_page: Page(
+                self.main_page
+                    .into_iter()
+                    .map(|x| x.transform_to())
+                    .collect(),
+            ),
             continuous_page_headers: vec![],
         }
     }
@@ -140,13 +158,19 @@ impl TransformTo<PublicInputVerifier> for stark_proof::PublicInput {
 
 impl TransformTo<SegmentInfoVerifier> for stark_proof::SegmentInfo {
     fn transform_to(self) -> SegmentInfoVerifier {
-        SegmentInfoVerifier { begin_addr: self.begin_addr.into(), stop_ptr: self.stop_ptr.into() }
+        SegmentInfoVerifier {
+            begin_addr: self.begin_addr.into(),
+            stop_ptr: self.stop_ptr.into(),
+        }
     }
 }
 
 impl TransformTo<AddrValue> for stark_proof::PubilcMemoryCell {
     fn transform_to(self) -> AddrValue {
-        AddrValue { address: self.address.into(), value: self.value.into() }
+        AddrValue {
+            address: self.address.into(),
+            value: self.value.into(),
+        }
     }
 }
 
@@ -186,7 +210,9 @@ impl TransformTo<FriUnsentCommitmentVerifier> for stark_proof::FriUnsentCommitme
 
 impl TransformTo<PowUnsentCommitmentVerifier> for stark_proof::ProofOfWorkUnsentCommitment {
     fn transform_to(self) -> PowUnsentCommitmentVerifier {
-        PowUnsentCommitmentVerifier { nonce: self.nonce.to_u64_digits()[0] }
+        PowUnsentCommitmentVerifier {
+            nonce: self.nonce.to_u64_digits()[0],
+        }
     }
 }
 
@@ -213,7 +239,9 @@ impl TransformTo<TraceDecommitmentVerifier> for stark_proof::TracesDecommitment 
 
 impl TransformTo<TableDecommitmentVerifier> for stark_proof::TableDecommitment {
     fn transform_to(self) -> TableDecommitmentVerifier {
-        TableDecommitmentVerifier { values: self.values.into_iter().map(|x| x.into()).collect() }
+        TableDecommitmentVerifier {
+            values: self.values.into_iter().map(|x| x.into()).collect(),
+        }
     }
 }
 
@@ -228,7 +256,9 @@ impl TransformTo<TraceWitnessVerifier> for stark_proof::TracesWitness {
 
 impl TransformTo<TableCommitmentWitnessVerifier> for stark_proof::TableCommitmentWitness {
     fn transform_to(self) -> TableCommitmentWitnessVerifier {
-        TableCommitmentWitnessVerifier { vector: self.vector.transform_to() }
+        TableCommitmentWitnessVerifier {
+            vector: self.vector.transform_to(),
+        }
     }
 }
 
@@ -242,7 +272,9 @@ impl TransformTo<VectorCommitmentWitnessVerifier> for stark_proof::VectorCommitm
 
 impl TransformTo<FriWitnessVerifier> for stark_proof::FriWitness {
     fn transform_to(self) -> FriWitnessVerifier {
-        FriWitnessVerifier { layers: self.layers.into_iter().map(|x| x.transform_to()).collect() }
+        FriWitnessVerifier {
+            layers: self.layers.into_iter().map(|x| x.transform_to()).collect(),
+        }
     }
 }
 
@@ -257,7 +289,9 @@ impl TransformTo<LayerWitness> for stark_proof::FriLayerWitness {
 
 impl TransformTo<TableCommitmentWitnessVerifier> for stark_proof::TableCommitmentWitnessFlat {
     fn transform_to(self) -> TableCommitmentWitnessVerifier {
-        TableCommitmentWitnessVerifier { vector: self.vector.transform_to() }
+        TableCommitmentWitnessVerifier {
+            vector: self.vector.transform_to(),
+        }
     }
 }
 

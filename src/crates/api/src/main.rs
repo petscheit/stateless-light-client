@@ -80,8 +80,8 @@ async fn get_all_epoch_updates(db: Db) -> Result<impl Reply, Rejection> {
 async fn get_proof(id: i64, db: Db) -> Result<impl Reply, Rejection> {
     match db.get_proof(id).await {
         Ok(Some(proof)) => {
-            let proof_json: serde_json::Value =
-                serde_json::from_str(&proof.proof).map_err(|_| warp::reject::custom(JsonParseError))?;
+            let proof_json: serde_json::Value = serde_json::from_str(&proof.proof)
+                .map_err(|_| warp::reject::custom(JsonParseError))?;
             Ok(json(&proof_json))
         }
         Ok(None) => Err(warp::reject::not_found()),
@@ -95,8 +95,8 @@ async fn get_proof(id: i64, db: Db) -> Result<impl Reply, Rejection> {
 async fn get_proof_by_beacon_height(height: u64, db: Db) -> Result<impl Reply, Rejection> {
     match db.get_proof_by_beacon_height(height).await {
         Ok(Some(proof)) => {
-            let proof_json: serde_json::Value =
-                serde_json::from_str(&proof.proof).map_err(|_| warp::reject::custom(JsonParseError))?;
+            let proof_json: serde_json::Value = serde_json::from_str(&proof.proof)
+                .map_err(|_| warp::reject::custom(JsonParseError))?;
             Ok(json(&proof_json))
         }
         Ok(None) => Err(warp::reject::not_found()),
@@ -110,8 +110,8 @@ async fn get_proof_by_beacon_height(height: u64, db: Db) -> Result<impl Reply, R
 async fn get_proof_by_execution_height(height: u64, db: Db) -> Result<impl Reply, Rejection> {
     match db.get_proof_by_execution_height(height).await {
         Ok(Some(proof)) => {
-            let proof_json: serde_json::Value =
-                serde_json::from_str(&proof.proof).map_err(|_| warp::reject::custom(JsonParseError))?;
+            let proof_json: serde_json::Value = serde_json::from_str(&proof.proof)
+                .map_err(|_| warp::reject::custom(JsonParseError))?;
             Ok(json(&proof_json))
         }
         Ok(None) => Err(warp::reject::not_found()),

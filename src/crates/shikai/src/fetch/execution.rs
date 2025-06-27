@@ -1,4 +1,3 @@
-
 use alloy_provider::{Provider, ProviderBuilder};
 use alloy_rpc_types::Header as ExecutionHeader;
 use url::Url;
@@ -14,7 +13,7 @@ impl ExecutionFetcher {
         Self { base_url }
     }
 
-     pub async fn fetch_header(&self, block_number: u64) -> Result<ExecutionHeader, Error> {
+    pub async fn fetch_header(&self, block_number: u64) -> Result<ExecutionHeader, Error> {
         let rpc_url: Url = self.base_url.parse()?;
         let provider = ProviderBuilder::new().on_http(rpc_url);
 
@@ -23,7 +22,6 @@ impl ExecutionFetcher {
             .await
             .map_err(|_| Error::BlockNotFound)?
             .unwrap();
-
 
         Ok(block.header)
     }

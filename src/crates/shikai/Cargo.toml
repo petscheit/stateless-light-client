@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 dotenv.workspace = true
+bankai-core.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 tokio.workspace = true
@@ -27,3 +28,5 @@ starknet-core.workspace = true
 reqwest = { workspace = true, features = ["json"] }
 serde = { workspace = true, features = ["derive"] }
 url.workspace = true
+tree_hash.workspace = true
+tree_hash_derive.workspace = true

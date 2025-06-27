@@ -3,9 +3,8 @@ use alloy_rpc_types::Header;
 
 use crate::{
     error::Error,
-    fetch::api::ApiClient,
+    fetch::{api::ApiClient, execution::ExecutionFetcher},
     proof_output::RecursiveEpochOutput,
-    retrieve::HeaderReader,
     stone::verify::verify_proof,
 };
 
@@ -31,7 +30,7 @@ impl VerifiedHeader {
             block_number, epoch_output.execution_header_height
         );
 
-        let header_reader = HeaderReader::new(rpc_url.to_string());
+        let header_reader = ExecutionFetcher::new(rpc_url.to_string());
         let header = header_reader.fetch_header(block_number).await?;
 
         assert_eq!(
@@ -124,4 +123,4 @@ impl VerifiedHeader {
     pub fn parent_beacon_block_root(&self) -> Option<B256> {
         self.0.parent_beacon_block_root
     }
-} 
+}
