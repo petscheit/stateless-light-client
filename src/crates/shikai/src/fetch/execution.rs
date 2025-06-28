@@ -1,6 +1,7 @@
-use alloy_primitives::Address;
+use alloy_primitives::{Address, FixedBytes};
 use alloy_provider::{Provider, ProviderBuilder};
 use alloy_rpc_types::{EIP1186AccountProofResponse, Header as ExecutionHeader};
+use eth_trie_proofs::{tx_receipt_trie::TxReceiptsMptHandler, tx_trie::TxsMptHandler};
 use url::Url;
 
 use crate::error::Error;
@@ -42,5 +43,31 @@ impl ExecutionFetcher {
             .map_err(|_| Error::BlockNotFound)?;
 
         Ok(proof)
+    }
+
+    pub async fn fetch_tx_proof(
+        &self,
+        tx_hash: FixedBytes<32>,
+    ) -> Result<(), Error> {
+        let rpc_url: Url = self.base_url.parse()?;
+
+        let mut txs_mpt_handler = TxsMptHandler::new(rpc_url).unwrap();
+        txs_mpt_handler
+            .build_tx_tree_from_tx_hash(tx_hash)
+            .await
+            .unwrap();
+
+        let tx_index = txs_mpt_handler
+            .tx_hash_to_tx_index(tx_hash)
+            .unwrap();
+        let proof = txs_mpt_handler.get_proof(tx_index).unwrap();
+        println!("Proof: {:?}", proof);
+        txs_mpt_handler
+            .verify_proof(tx_index, proof.clone())
+            .unwrap();
+
+        println!("Tx proof verified successfully!");
+
+        Ok(())
     }
 }

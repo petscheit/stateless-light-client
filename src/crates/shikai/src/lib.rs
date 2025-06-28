@@ -1,8 +1,8 @@
-use alloy_primitives::Address;
+use alloy_primitives::{Address, FixedBytes};
 
 use crate::{
     error::Error,
-    fetch::api::ApiClient,
+    fetch::{api::ApiClient, execution::ExecutionFetcher},
     verified::{
         beacon::VerifiedBeaconHeader,
         execution::{account::VerifiedAccount, VerifiedHeader},
@@ -37,6 +37,12 @@ impl Execution<'_> {
         block_number: u64,
     ) -> Result<VerifiedAccount, Error> {
         VerifiedAccount::new(address, block_number, self.api_client, self.rpc_url).await
+    }
+
+    pub async fn tx(&self, tx_hash: FixedBytes<32>) -> Result<(), Error> {
+        ExecutionFetcher::new(self.rpc_url.to_string()).fetch_tx_proof(tx_hash).await?;
+        
+        Ok(())
     }
 }
 

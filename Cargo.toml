@@ -68,7 +68,7 @@ clap = { version = "4.5.22", features = ["derive"] }
 tracing-subscriber = { version = "0.3.19", features = ["json"] }
 sqlx = { version = "0.7.0-alpha.1", features = ["runtime-tokio-rustls", "sqlite", "chrono", "migrate"] }
 uuid = { version = "1.0", features = ["v4"] }
-
+eth-trie-proofs = "0.1.2"
 swiftness_air = { git = "https://github.com/iosis-tech/swiftness", default-features = false, version = "1.0.0", features = ["dynamic", "stone6"] }
 swiftness_commitment = { git = "https://github.com/iosis-tech/swiftness", default-features = false, version = "1.0.0", features = ["blake2s_248_lsb"] }
 swiftness_fri = { git = "https://github.com/iosis-tech/swiftness", default-features = false, version = "1.0.0" }
