@@ -5,7 +5,7 @@ use crate::{
     fetch::{api::ApiClient, execution::ExecutionFetcher},
     verified::{
         beacon::VerifiedBeaconHeader,
-        execution::{account::VerifiedAccount, VerifiedHeader},
+        execution::{account::VerifiedAccount, tx::VerifiedTransaction, VerifiedHeader},
     },
 };
 
@@ -39,10 +39,8 @@ impl Execution<'_> {
         VerifiedAccount::new(address, block_number, self.api_client, self.rpc_url).await
     }
 
-    pub async fn tx(&self, tx_hash: FixedBytes<32>) -> Result<(), Error> {
-        ExecutionFetcher::new(self.rpc_url.to_string()).fetch_tx_proof(tx_hash).await?;
-        
-        Ok(())
+    pub async fn tx(&self, tx_hash: FixedBytes<32>) -> Result<VerifiedTransaction, Error> {
+        VerifiedTransaction::new(tx_hash, self.api_client, self.rpc_url).await
     }
 }
 

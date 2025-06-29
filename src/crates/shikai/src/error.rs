@@ -20,4 +20,8 @@ pub enum Error {
     BlockNotFound,
     #[error("Trie proof verification failed")]
     TrieProofVerification(#[from] alloy_trie::proof::ProofVerificationError),
+    #[error("Consensus tx decode error: {0}")]
+    ConsensusTxDecode(#[from] eth_trie_proofs::EthTrieError),
+    #[error("Signature error: {0}")]
+    Signature(#[from] alloy_primitives::SignatureError),
 }

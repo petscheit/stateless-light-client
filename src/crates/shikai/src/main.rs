@@ -18,7 +18,8 @@ async fn main() {
 
     let tx_hash = FixedBytes::<32>::from_hex("0x47cea127fc2dcf17430191190d7edfb4ce971d82e8bef7a8ec866b66512e53c5").unwrap();
 
-    shikai.execution().tx(tx_hash).await.unwrap();
+    let tx = shikai.execution().tx(tx_hash).await.unwrap();
+    println!("Verified Transaction: {:?}", tx.0);
 
     // let account = shikai
     //     .execution()
