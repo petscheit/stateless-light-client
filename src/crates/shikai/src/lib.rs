@@ -2,7 +2,7 @@ use alloy_primitives::{Address, FixedBytes};
 
 use crate::{
     error::Error,
-    fetch::{api::ApiClient, execution::ExecutionFetcher},
+    fetch::api::ApiClient,
     verified::{
         beacon::VerifiedBeaconHeader,
         execution::{account::VerifiedAccount, tx::VerifiedTransaction, VerifiedHeader},

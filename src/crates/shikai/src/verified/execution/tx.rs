@@ -1,7 +1,7 @@
 // Now txs....
 
-use alloy_primitives::{Address, Bytes, FixedBytes, SignatureError, TxKind, B256, U256};
-use alloy_rlp::{Decodable, Encodable};
+use alloy_primitives::{Address, Bytes, SignatureError, TxKind, B256, U256};
+use alloy_rlp::Encodable;
 use alloy_rpc_types::AccessList;
 use alloy_trie::{proof::verify_proof, Nibbles};
 use eth_trie_proofs::tx::ConsensusTx;
@@ -15,11 +15,7 @@ use crate::{
 pub struct VerifiedTransaction(pub ConsensusTx);
 
 impl VerifiedTransaction {
-    pub async fn new(
-        tx_hash: B256,
-        api_client: &ApiClient,
-        rpc_url: &str,
-    ) -> Result<Self, Error> {
+    pub async fn new(tx_hash: B256, api_client: &ApiClient, rpc_url: &str) -> Result<Self, Error> {
         let execution_fetcher = ExecutionFetcher::new(rpc_url.to_string());
         let block_number = execution_fetcher.fetch_tx_block_number(tx_hash).await?;
         let header = VerifiedHeader::new(block_number, api_client, rpc_url).await?;
@@ -31,8 +27,11 @@ impl VerifiedTransaction {
         tx_index.encode(&mut rlp_tx_index);
         let key = Nibbles::unpack(&rlp_tx_index);
 
-        let proof_bytes: Vec<Bytes> =
-            tx_proof.proof.iter().map(|p| Bytes::from(p.clone())).collect();
+        let proof_bytes: Vec<Bytes> = tx_proof
+            .proof
+            .iter()
+            .map(|p| Bytes::from(p.clone()))
+            .collect();
 
         verify_proof(
             header.transactions_root(),
@@ -41,7 +40,7 @@ impl VerifiedTransaction {
             proof_bytes.iter(),
         )?;
 
-        let tx = ConsensusTx::rlp_decode(&mut tx_proof.encoded_tx.as_slice())?;
+        let tx = ConsensusTx::rlp_decode(tx_proof.encoded_tx.as_slice())?;
 
         Ok(Self(tx))
     }

@@ -1,4 +1,4 @@
-use alloy_primitives::{hex::FromHex, Address, FixedBytes};
+use alloy_primitives::{hex::FromHex, FixedBytes};
 use dotenv::from_filename;
 use shikai::Shikai;
 
@@ -16,7 +16,10 @@ async fn main() {
         std::env::var("BEACON_RPC_URL").unwrap(),
     );
 
-    let tx_hash = FixedBytes::<32>::from_hex("0x47cea127fc2dcf17430191190d7edfb4ce971d82e8bef7a8ec866b66512e53c5").unwrap();
+    let tx_hash = FixedBytes::<32>::from_hex(
+        "0x47cea127fc2dcf17430191190d7edfb4ce971d82e8bef7a8ec866b66512e53c5",
+    )
+    .unwrap();
 
     let tx = shikai.execution().tx(tx_hash).await.unwrap();
     println!("Verified Transaction: {:?}", tx.0);
