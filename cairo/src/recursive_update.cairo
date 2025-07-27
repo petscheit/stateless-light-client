@@ -56,18 +56,24 @@ func main{
     } else {
         print_string('recursive case');
 
-        let (_, remainder) = felt_divmod(epoch_update.header.slot.low + 1, SYNC_COMMITTEE_PERIOD);
+        local expected_proof_output: CircuitOutput;
+        %{ load_expected_proof_output() %}
+
+        let (previous_term, _) = felt_divmod(expected_proof_output.beacon_height, SYNC_COMMITTEE_PERIOD);
+        let (current_term, _) = felt_divmod(epoch_update.header.slot.low, SYNC_COMMITTEE_PERIOD);
+
         local is_committee_transition: felt;
-        if (remainder == 0) {
-            is_committee_transition = 1;
-        } else {
+        if (previous_term == current_term) {
             is_committee_transition = 0;
+        } else {
+            is_committee_transition = 1;
         }
+
         print_string('is_committee_transition');
         print_felt_hex(is_committee_transition);
 
         with pow2_array, sha256_ptr {
-            let (epoch_update_output, next_committee_hash) = handle_recursive_case(epoch_update, program_hash, is_committee_transition);
+            let (epoch_update_output, next_committee_hash) = handle_recursive_case(epoch_update, program_hash, is_committee_transition, expected_proof_output);
         }
         print_string('confirmed epoch');
 
@@ -122,58 +128,54 @@ func handle_recursive_case{
     mul_mod_ptr: ModBuiltin*,
     sha256_ptr: felt*,
     pow2_array: felt*,
-}(epoch_update: EpochUpdate, program_hash: felt, is_committee_transition: felt) -> (EpochUpdateOutput, Uint256) {
+}(epoch_update: EpochUpdate, program_hash: felt, is_committee_transition: felt, expected_proof_output: CircuitOutput) -> (EpochUpdateOutput, Uint256) {
     alloc_locals;
 
     let (epoch_update_output) = run_epoch_update(epoch_update);
     print_string('epoch update output');
 
-    local expected_proof_output: CircuitOutput;
-    %{ load_expected_proof_output() %}
-
-
     // Check that expected matches the committee hash that was used to sign
 
     if (is_committee_transition == 1) {
-        print_string('exp com');
-        print_felt_hex(expected_proof_output.next_committee_hash.low);
-        print_felt_hex(expected_proof_output.next_committee_hash.high);
+        // print_string('exp com');
+        // print_felt_hex(expected_proof_output.next_committee_hash.low);
+        // print_felt_hex(expected_proof_output.next_committee_hash.high);
 
-        print_string('epoch update output');
-        print_felt_hex(epoch_update_output.current_committee_hash.low);
-        print_felt_hex(epoch_update_output.current_committee_hash.high);
+        // print_string('epoch update output');
+        // print_felt_hex(epoch_update_output.current_committee_hash.low);
+        // print_felt_hex(epoch_update_output.current_committee_hash.high);
         assert expected_proof_output.next_committee_hash.low = epoch_update_output.current_committee_hash.low;
         assert expected_proof_output.next_committee_hash.high = epoch_update_output.current_committee_hash.high;
     } else {
-        print_string('exp com');
-        print_felt_hex(expected_proof_output.current_committee_hash.low);
-        print_felt_hex(expected_proof_output.current_committee_hash.high);
+        // print_string('exp com');
+        // print_felt_hex(expected_proof_output.current_committee_hash.low);
+        // print_felt_hex(expected_proof_output.current_committee_hash.high);
 
-        print_string('epoch update output');
-        print_felt_hex(epoch_update_output.current_committee_hash.low);
-        print_felt_hex(epoch_update_output.current_committee_hash.high);
+        // print_string('epoch update output');
+        // print_felt_hex(epoch_update_output.current_committee_hash.low);
+        // print_felt_hex(epoch_update_output.current_committee_hash.high);
         assert expected_proof_output.current_committee_hash.low = epoch_update_output.current_committee_hash.low;
         assert expected_proof_output.current_committee_hash.high = epoch_update_output.current_committee_hash.high;
     }
 
-    print_string('checked committee hash');
+    // print_string('checked committee hash');
 
-    print_string('program hash');
-    print_felt_hex(program_hash);
+    // print_string('program hash');
+    // print_felt_hex(program_hash);
 
-    print_felt_hex(expected_proof_output.beacon_header_root.low);
-    print_felt_hex(expected_proof_output.beacon_header_root.high);
-    print_felt_hex(expected_proof_output.beacon_state_root.low);
-    print_felt_hex(expected_proof_output.beacon_state_root.high);
-    print_felt_hex(expected_proof_output.beacon_height);
-    print_felt_hex(expected_proof_output.n_signers);
-    print_felt_hex(expected_proof_output.execution_header_root.low);
-    print_felt_hex(expected_proof_output.execution_header_root.high);
-    print_felt_hex(expected_proof_output.execution_header_height);
-    print_felt_hex(expected_proof_output.current_committee_hash.low);
-    print_felt_hex(expected_proof_output.current_committee_hash.high);
-    print_felt_hex(expected_proof_output.next_committee_hash.low);
-    print_felt_hex(expected_proof_output.next_committee_hash.high);
+    // print_felt_hex(expected_proof_output.beacon_header_root.low);
+    // print_felt_hex(expected_proof_output.beacon_header_root.high);
+    // print_felt_hex(expected_proof_output.beacon_state_root.low);
+    // print_felt_hex(expected_proof_output.beacon_state_root.high);
+    // print_felt_hex(expected_proof_output.beacon_height);
+    // print_felt_hex(expected_proof_output.n_signers);
+    // print_felt_hex(expected_proof_output.execution_header_root.low);
+    // print_felt_hex(expected_proof_output.execution_header_root.high);
+    // print_felt_hex(expected_proof_output.execution_header_height);
+    // print_felt_hex(expected_proof_output.current_committee_hash.low);
+    // print_felt_hex(expected_proof_output.current_committee_hash.high);
+    // print_felt_hex(expected_proof_output.next_committee_hash.low);
+    // print_felt_hex(expected_proof_output.next_committee_hash.high);
 
     // Construct the expected verifier output
     tempvar expected_verifier_output = cast(
@@ -232,8 +234,7 @@ func handle_genesis_case{
     alloc_locals;
 
     let (epoch_update_output) = run_epoch_update(epoch_update);
-
-    tempvar expected_genesis_committee = Uint256(low=0xe5fec5cd2304cab6086b1eea025ccd74, high=0xf32b83714599ab70193ba4597159560c);
+    tempvar expected_genesis_committee = Uint256(low=0x36c253a239c2878d1a6aa8d46dfe4be8, high=0xdfb8eb2acda46f413d93538c7d6b3610);
     assert expected_genesis_committee.low = epoch_update_output.current_committee_hash.low;
     assert expected_genesis_committee.high = epoch_update_output.current_committee_hash.high;
 
@@ -270,20 +271,20 @@ func write_circuit_output{
         tempvar range_check_ptr = range_check_ptr;
     }
 
-    print_string('output_ptr');
-    print_felt_hex(output_ptr[0]);
-    print_felt_hex(output_ptr[1]);
-    print_felt_hex(output_ptr[2]);
-    print_felt_hex(output_ptr[3]);
-    print_felt_hex(output_ptr[4]);
-    print_felt_hex(output_ptr[5]);
-    print_felt_hex(output_ptr[6]);
-    print_felt_hex(output_ptr[7]);
-    print_felt_hex(output_ptr[8]);
-    print_felt_hex(output_ptr[9]);
-    print_felt_hex(output_ptr[10]);
-    print_felt_hex(output_ptr[11]);
-    print_felt_hex(output_ptr[12]);
+    // print_string('output_ptr');
+    // print_felt_hex(output_ptr[0]);
+    // print_felt_hex(output_ptr[1]);
+    // print_felt_hex(output_ptr[2]);
+    // print_felt_hex(output_ptr[3]);
+    // print_felt_hex(output_ptr[4]);
+    // print_felt_hex(output_ptr[5]);
+    // print_felt_hex(output_ptr[6]);
+    // print_felt_hex(output_ptr[7]);
+    // print_felt_hex(output_ptr[8]);
+    // print_felt_hex(output_ptr[9]);
+    // print_felt_hex(output_ptr[10]);
+    // print_felt_hex(output_ptr[11]);
+    // print_felt_hex(output_ptr[12]);
 
     let output_ptr = output_ptr + 13;
     return ();

@@ -202,7 +202,9 @@ impl CustomHintProcessor {
             &hint_data.ids_data,
             &hint_data.ap_tracking,
         )?;
-        let program_hash = Felt252::from_hex_unchecked("0x5b6ff167e72599c14a2e99cac4a6e8db3036db0f0d9acac15d5822ea315287a");
+        let program_hash = Felt252::from_hex_unchecked(
+            "0x6305ea579daa2cd35f92ce5c41fa3467a7b44c4d69f9849844aff9d552620e",
+        );
         vm.insert_value(program_hash_ptr, program_hash)?;
 
         Ok(())
