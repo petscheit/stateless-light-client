@@ -1,8 +1,8 @@
-PWD /Users/paul/Documents/projects/bankai_paper/paper
+PWD /Users/paul/Documents/projects/stateless-light-client/paper
 INPUT /usr/local/texlive/2022/texmf.cnf
 INPUT /usr/local/texlive/2022/texmf-dist/web2c/texmf.cnf
 INPUT /usr/local/texlive/2022/texmf-var/web2c/pdftex/pdflatex.fmt
-INPUT /Users/paul/Documents/projects/bankai_paper/paper/main.tex
+INPUT /Users/paul/Documents/projects/stateless-light-client/paper/main.tex
 OUTPUT main.log
 INPUT ./llncs.cls
 INPUT ./llncs.cls
