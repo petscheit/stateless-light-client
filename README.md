@@ -4,7 +4,7 @@ This repository contains the implementation for our paper on Stateless Light Cli
 
 The full details of the architecture, methodology, and results can be found in our research paper, which is included in this repository.
 
-[**Read the paper here](./paper/main.pdf)**
+[**Read the paper here**](./paper/main.pdf)
 
 ## Repository Structure
 
