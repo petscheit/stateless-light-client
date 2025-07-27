@@ -1,0 +1,481 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2023.1.11)  27 JUL 2025 20:46
+entering extended mode
+ restricted \write18 enabled.
+ file:line:error style messages enabled.
+ %&-line parsing enabled.
+**/Users/paul/Documents/projects/bankai_paper/paper/main.tex
+(/Users/paul/Documents/projects/bankai_paper/paper/main.tex
+LaTeX2e <2021-11-15> patch level 1
+L3 programming layer <2022-02-24> (./llncs.cls
+Document Class: llncs 2022/01/12 v2.21 
+ LaTeX document class for Lecture Notes in Computer Science
+(/usr/local/texlive/2022/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2021/10/04 v1.4n Standard LaTeX document class
+(/usr/local/texlive/2022/texmf-dist/tex/latex/base/size10.clo
+File: size10.clo 2021/10/04 v1.4n Standard LaTeX file (size option)
+)
+\c@part=\count185
+\c@section=\count186
+\c@subsection=\count187
+\c@subsubsection=\count188
+\c@paragraph=\count189
+\c@subparagraph=\count190
+\c@figure=\count191
+\c@table=\count192
+\abovecaptionskip=\skip47
+\belowcaptionskip=\skip48
+\bibindent=\dimen138
+) (/usr/local/texlive/2022/texmf-dist/tex/latex/tools/multicol.sty
+Package: multicol 2021/10/28 v1.9b multicolumn formatting (FMi)
+\c@tracingmulticols=\count193
+\mult@box=\box50
+\multicol@leftmargin=\dimen139
+\c@unbalance=\count194
+\c@collectmore=\count195
+\doublecol@number=\count196
+\multicoltolerance=\count197
+\multicolpretolerance=\count198
+\full@width=\dimen140
+\page@free=\dimen141
+\premulticols=\dimen142
+\postmulticols=\dimen143
+\multicolsep=\skip49
+\multicolbaselineskip=\skip50
+\partial@page=\box51
+\last@line=\box52
+\maxbalancingoverflow=\dimen144
+\mult@rightbox=\box53
+\mult@grightbox=\box54
+\mult@firstbox=\box55
+\mult@gfirstbox=\box56
+\@tempa=\box57
+\@tempa=\box58
+\@tempa=\box59
+\@tempa=\box60
+\@tempa=\box61
+\@tempa=\box62
+\@tempa=\box63
+\@tempa=\box64
+\@tempa=\box65
+\@tempa=\box66
+\@tempa=\box67
+\@tempa=\box68
+\@tempa=\box69
+\@tempa=\box70
+\@tempa=\box71
+\@tempa=\box72
+\@tempa=\box73
+\@tempa=\box74
+\@tempa=\box75
+\@tempa=\box76
+\@tempa=\box77
+\@tempa=\box78
+\@tempa=\box79
+\@tempa=\box80
+\@tempa=\box81
+\@tempa=\box82
+\@tempa=\box83
+\@tempa=\box84
+\@tempa=\box85
+\@tempa=\box86
+\@tempa=\box87
+\@tempa=\box88
+\@tempa=\box89
+\@tempa=\box90
+\@tempa=\box91
+\@tempa=\box92
+\c@minrows=\count199
+\c@columnbadness=\count266
+\c@finalcolumnbadness=\count267
+\last@try=\dimen145
+\multicolovershoot=\dimen146
+\multicolundershoot=\dimen147
+\mult@nat@firstbox=\box93
+\colbreak@box=\box94
+\mc@col@check@num=\count268
+) (/usr/local/texlive/2022/texmf-dist/tex/latex/oberdiek/aliascnt.sty
+Package: aliascnt 2018/09/07 v1.5 Alias counters (HO)
+)
+\c@chapter=\count269
+LaTeX Font Info:    Redeclaring math symbol \Gamma on input line 362.
+LaTeX Font Info:    Redeclaring math symbol \Delta on input line 363.
+LaTeX Font Info:    Redeclaring math symbol \Theta on input line 364.
+LaTeX Font Info:    Redeclaring math symbol \Lambda on input line 365.
+LaTeX Font Info:    Redeclaring math symbol \Xi on input line 366.
+LaTeX Font Info:    Redeclaring math symbol \Pi on input line 367.
+LaTeX Font Info:    Redeclaring math symbol \Sigma on input line 368.
+LaTeX Font Info:    Redeclaring math symbol \Upsilon on input line 369.
+LaTeX Font Info:    Redeclaring math symbol \Phi on input line 370.
+LaTeX Font Info:    Redeclaring math symbol \Psi on input line 371.
+LaTeX Font Info:    Redeclaring math symbol \Omega on input line 372.
+\tocchpnum=\dimen148
+\tocsecnum=\dimen149
+\tocsectotal=\dimen150
+\tocsubsecnum=\dimen151
+\tocsubsectotal=\dimen152
+\tocsubsubsecnum=\dimen153
+\tocsubsubsectotal=\dimen154
+\tocparanum=\dimen155
+\tocparatotal=\dimen156
+\tocsubparanum=\dimen157
+\@tempcntc=\count270
+\fnindent=\dimen158
+\c@@inst=\count271
+\c@@auth=\count272
+\c@auco=\count273
+\instindent=\dimen159
+\authrun=\box95
+\authorrunning=\toks16
+\tocauthor=\toks17
+\titrun=\box96
+\titlerunning=\toks18
+\toctitle=\toks19
+\c@theorem=\count274
+\c@case=\count275
+\c@conjecture=\count276
+\c@corollary=\count277
+\c@definition=\count278
+\c@example=\count279
+\c@exercise=\count280
+\c@lemma=\count281
+\c@note=\count282
+\c@problem=\count283
+\c@property=\count284
+\c@proposition=\count285
+\c@question=\count286
+\c@solution=\count287
+\c@remark=\count288
+\headlineindent=\dimen160
+) (/usr/local/texlive/2022/texmf-dist/tex/latex/base/fontenc.sty
+Package: fontenc 2021/04/29 v2.0v Standard LaTeX package
+) (/usr/local/texlive/2022/texmf-dist/tex/latex/graphics/graphicx.sty
+Package: graphicx 2021/09/16 v1.2d Enhanced LaTeX Graphics (DPC,SPQR)
+ (/usr/local/texlive/2022/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 2014/10/28 v1.15 key=value parser (DPC)
+\KV@toks@=\toks20
+) (/usr/local/texlive/2022/texmf-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2021/03/04 v1.4d Standard LaTeX Graphics (DPC,SPQR)
+ (/usr/local/texlive/2022/texmf-dist/tex/latex/graphics/trig.sty
+Package: trig 2021/08/11 v1.11 sin cos tan (DPC)
+) (/usr/local/texlive/2022/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
+)
+Package graphics Info: Driver file: pdftex.def on input line 107.
+ (/usr/local/texlive/2022/texmf-dist/tex/latex/graphics-def/pdftex.def
+File: pdftex.def 2020/10/05 v1.2a Graphics/color driver for pdftex
+))
+\Gin@req@height=\dimen161
+\Gin@req@width=\dimen162
+) (/usr/local/texlive/2022/texmf-dist/tex/latex/float/float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count289
+\float@exts=\toks21
+\float@box=\box97
+\@float@everytoks=\toks22
+\@floatcapt=\box98
+) (/usr/local/texlive/2022/texmf-dist/tex/latex/booktabs/booktabs.sty
+Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
+\heavyrulewidth=\dimen163
+\lightrulewidth=\dimen164
+\cmidrulewidth=\dimen165
+\belowrulesep=\dimen166
+\belowbottomsep=\dimen167
+\aboverulesep=\dimen168
+\abovetopsep=\dimen169
+\cmidrulesep=\dimen170
+\cmidrulekern=\dimen171
+\defaultaddspace=\dimen172
+\@cmidla=\count290
+\@cmidlb=\count291
+\@aboverulesep=\dimen173
+\@belowrulesep=\dimen174
+\@thisruleclass=\count292
+\@lastruleclass=\count293
+\@thisrulewidth=\dimen175
+) (/usr/local/texlive/2022/texmf-dist/tex/latex/siunitx/siunitx.sty
+Package: siunitx 2022-02-15 v3.0.49 A comprehensive (SI) units package
+\l__siunitx_angle_tmp_dim=\dimen176
+\l__siunitx_angle_marker_box=\box99
+\l__siunitx_angle_unit_box=\box100
+\l__siunitx_compound_count_int=\count294
+ (/usr/local/texlive/2022/texmf-dist/tex/latex/translations/translations.sty
+Package: translations 2022/02/05 v1.12 internationalization of LaTeX2e packages (CN)
+ (/usr/local/texlive/2022/texmf-dist/tex/latex/etoolbox/etoolbox.sty
+Package: etoolbox 2020/10/05 v2.5k e-TeX tools for LaTeX (JAW)
+\etb@tempcnta=\count295
+) (/usr/local/texlive/2022/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
+Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO)
+ (/usr/local/texlive/2022/texmf-dist/tex/generic/infwarerr/infwarerr.sty
+Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
+) (/usr/local/texlive/2022/texmf-dist/tex/generic/iftex/iftex.sty
+Package: iftex 2022/02/03 v1.0f TeX engine tests
+) (/usr/local/texlive/2022/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty
+Package: ltxcmds 2020-05-10 v1.25 LaTeX kernel commands for general use (HO)
+)
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode found.
+))
+\l__siunitx_number_exponent_fixed_int=\count296
+\l__siunitx_number_min_decimal_int=\count297
+\l__siunitx_number_min_integer_int=\count298
+\l__siunitx_number_round_precision_int=\count299
+\l__siunitx_number_group_minimum_int=\count300
+ (/usr/local/texlive/2022/texmf-dist/tex/latex/amsmath/amstext.sty
+Package: amstext 2021/08/26 v2.01 AMS text
+ (/usr/local/texlive/2022/texmf-dist/tex/latex/amsmath/amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0 generic functions
+\@emptytoks=\toks23
+\ex@=\dimen177
+))
+\l__siunitx_table_tmp_box=\box101
+\l__siunitx_table_tmp_dim=\dimen178
+\l__siunitx_table_column_width_dim=\dimen179
+\l__siunitx_table_integer_box=\box102
+\l__siunitx_table_decimal_box=\box103
+\l__siunitx_table_before_box=\box104
+\l__siunitx_table_after_box=\box105
+\l__siunitx_table_before_dim=\dimen180
+\l__siunitx_table_carry_dim=\dimen181
+\l__siunitx_unit_tmp_int=\count301
+\l__siunitx_unit_position_int=\count302
+\l__siunitx_unit_total_int=\count303
+ (/usr/local/texlive/2022/texmf-dist/tex/latex/l3packages/l3keys2e/l3keys2e.sty (/usr/local/texlive/2022/texmf-dist/tex/latex/l3kernel/expl3.sty
+Package: expl3 2022-02-24 L3 programming layer (loader) 
+ (/usr/local/texlive/2022/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
+File: l3backend-pdftex.def 2022-02-07 L3 backend support: PDF output (pdfTeX)
+\l__color_backend_stack_int=\count304
+\l__pdf_internal_box=\box106
+))
+Package: l3keys2e 2022-01-12 LaTeX2e option processing using LaTeX3 keys
+) (/usr/local/texlive/2022/texmf-dist/tex/latex/tools/array.sty
+Package: array 2021/10/04 v2.5f Tabular extension package (FMi)
+\col@sep=\dimen182
+\ar@mcellbox=\box107
+\extrarowheight=\dimen183
+\NC@list=\toks24
+\extratabsurround=\skip51
+\backup@length=\skip52
+\ar@cellbox=\box108
+))
+Package translations Info: No language package found. I am going to use `english' as default language. on input line 25.
+ (./main.aux)
+\openout1 = `main.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+ (/usr/local/texlive/2022/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count305
+\scratchdimen=\dimen184
+\scratchbox=\box109
+\nofMPsegments=\count306
+\nofMParguments=\count307
+\everyMPshowfont=\toks25
+\MPscratchCnt=\count308
+\MPscratchDim=\dimen185
+\MPnumerator=\count309
+\makeMPintoPDFobject=\count310
+\everyMPtoPDFconversion=\toks26
+) (/usr/local/texlive/2022/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
+Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
+Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
+ (/usr/local/texlive/2022/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
+)) (/usr/local/texlive/2022/texmf-dist/tex/latex/graphics/color.sty
+Package: color 2021/12/07 v1.3c Standard LaTeX Color (DPC)
+ (/usr/local/texlive/2022/texmf-dist/tex/latex/graphics-cfg/color.cfg
+File: color.cfg 2016/01/02 v1.6 sample color configuration
+)
+Package color Info: Driver file: pdftex.def on input line 149.
+) (/usr/local/texlive/2022/texmf-dist/tex/latex/translations/translations-basic-dictionary-english.trsl
+File: translations-basic-dictionary-english.trsl (english translation file `translations-basic-dictionary')
+)
+Package translations Info: loading dictionary `translations-basic-dictionary' for `english'. on input line 25.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 41.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 41.
+
+Overfull \hbox (0.31073pt too wide) in paragraph at lines 44--45
+\T1/cmr/m/n/9 Our proof-of-concept for Ethereum con-firms the de-sign's fea-si-bil-ity, show-
+ []
+
+[1
+
+{/usr/local/texlive/2022/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5] [6]
+LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 146.
+ (/usr/local/texlive/2022/texmf-dist/tex/latex/base/t1cmtt.fd
+File: t1cmtt.fd 2019/12/16 v2.5j Standard LaTeX font definitions
+)
+<diagrams/high_level.png, id=32, 2127.95pt x 1606.0pt>
+File: diagrams/high_level.png Graphic file (type png)
+<use diagrams/high_level.png>
+Package pdftex.def Info: diagrams/high_level.png  used on input line 150.
+(pdftex.def)             Requested size: 277.69987pt x 209.5715pt.
+ [7] [8 <./diagrams/high_level.png>]
+LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 173.
+<diagrams/recursion_diagram.png, id=44, 5942.2pt x 1164.35pt>
+File: diagrams/recursion_diagram.png Graphic file (type png)
+<use diagrams/recursion_diagram.png>
+Package pdftex.def Info: diagrams/recursion_diagram.png  used on input line 189.
+(pdftex.def)             Requested size: 347.12354pt x 68.01025pt.
+
+Underfull \vbox (badness 5431) has occurred while \output is active []
+
+ [9]
+Overfull \hbox (4.57945pt too wide) in paragraph at lines 203--204
+[]\T1/cmr/bx/n/10 Prover: \T1/cmr/m/n/10 Proof gen-er-a-tion is han-dled by Stark-Ware's Shared Prover (SHARP),
+ []
+
+[10 <./diagrams/recursion_diagram.png>]
+Overfull \hbox (10.15448pt too wide) in paragraph at lines 214--215
+\T1/cmr/m/n/10 com-pu-ta-tion-ally in-ten-sive than ver-i-fy-ing com-mon elliptic-curve-based SNARKs
+ []
+
+[11]
+Overfull \hbox (10.77654pt too wide) in paragraph at lines 245--246
+[]\T1/cmr/bx/n/10 Light Client Cir-cuit\T1/cmr/m/n/10 : We then re-cur-sively proved epochs from Ethereum's
+ []
+
+[12]
+<diagrams/recursive_counter_observed_vs_predicted.png, id=58, 722.7pt x 361.35pt>
+File: diagrams/recursive_counter_observed_vs_predicted.png Graphic file (type png)
+<use diagrams/recursive_counter_observed_vs_predicted.png>
+Package pdftex.def Info: diagrams/recursive_counter_observed_vs_predicted.png  used on input line 262.
+(pdftex.def)             Requested size: 277.69987pt x 138.84724pt.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <9> on input line 263.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 263.
+ [13 <./diagrams/recursive_counter_observed_vs_predicted.png>]
+<diagrams/light_client_observed_vs_predicted.png, id=72, 722.7pt x 361.35pt>
+File: diagrams/light_client_observed_vs_predicted.png Graphic file (type png)
+<use diagrams/light_client_observed_vs_predicted.png>
+Package pdftex.def Info: diagrams/light_client_observed_vs_predicted.png  used on input line 275.
+(pdftex.def)             Requested size: 277.69987pt x 138.84724pt.
+<diagrams/step_count_vs_epoch.png, id=73, 722.7pt x 361.35pt>
+File: diagrams/step_count_vs_epoch.png Graphic file (type png)
+<use diagrams/step_count_vs_epoch.png>
+Package pdftex.def Info: diagrams/step_count_vs_epoch.png  used on input line 284.
+(pdftex.def)             Requested size: 277.69987pt x 138.84724pt.
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [14 <./diagrams/light_client_observed_vs_predicted.png>]
+<diagrams/proving_time_vs_epoch.png, id=78, 722.7pt x 361.35pt>
+File: diagrams/proving_time_vs_epoch.png Graphic file (type png)
+<use diagrams/proving_time_vs_epoch.png>
+Package pdftex.def Info: diagrams/proving_time_vs_epoch.png  used on input line 298.
+(pdftex.def)             Requested size: 166.61781pt x 83.30724pt.
+<diagrams/proving_time_distribution.png, id=79, 578.16pt x 433.62pt>
+File: diagrams/proving_time_distribution.png Graphic file (type png)
+<use diagrams/proving_time_distribution.png>
+Package pdftex.def Info: diagrams/proving_time_distribution.png  used on input line 302.
+(pdftex.def)             Requested size: 166.61781pt x 124.95921pt.
+
+Underfull \vbox (badness 1755) has occurred while \output is active []
+
+ [15 <./diagrams/step_count_vs_epoch.png> <./diagrams/proving_time_vs_epoch.png> <./diagrams/proving_time_distribution.png>] [16]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [17] (./main.bbl [18]
+Underfull \hbox (badness 1755) in paragraph at lines 23--25
+[]\T1/cmr/m/n/9 Bonnet, F., Bra-mas, Q., Défago, X.: State-less dis-tributed ledgers (2020),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--35
+[]\T1/cmr/m/n/9 Chatzigiannis, P., Baldimtsi, F., Chalkias, K.: SoK: Blockchain light
+ []
+
+
+Underfull \hbox (badness 3482) in paragraph at lines 32--35
+\T1/cmr/m/n/9 clients. Tech. Rep. 2021/1657, IACR Cryp-tol-ogy ePrint Archive (2021),
+ []
+
+
+Underfull \hbox (badness 1286) in paragraph at lines 37--40
+[]\T1/cmr/m/n/9 Ethereum: ethereum/consensus-specs. https://github.com/ethereum/consensus-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 47--49
+[]\T1/cmr/m/n/9 Goel, G., Jain, J.: Bring-ing IBC to Ethereum us-ing ZK-Snarks.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--53
+[]\T1/cmr/m/n/9 Goes, C.: The inter-blockchain com-mu-ni-ca-tion pro-to-col: An overview.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 64--66
+[]\T1/cmr/m/n/9 Nakamoto, S.: Bit-coin: A peer-to-peer elec-tronic cash sys-tem.
+ []
+
+
+Underfull \hbox (badness 3679) in paragraph at lines 72--75
+[]\T1/cmr/m/n/9 StarkWare In-dus-tries: Stone prover: Cairo stark re-cur-sive proof sys-tem.
+ []
+
+
+Underfull \hbox (badness 5345) in paragraph at lines 72--75
+\T1/cmr/m/n/9 Open-sourced im-ple-men-ta-tion, Apache 2.0 li-cense, Aug 2023. Avail-able:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 77--79
+[]\T1/cmr/m/n/9 Succinct Labs: Telepa-thy pro-to-col doc-u-men-ta-tion.
+ []
+
+
+Underfull \hbox (badness 6542) in paragraph at lines 81--84
+[]\T1/cmr/m/n/9 Succinct Labs: Ibc eu-reka \TS1/cmr/m/n/9 Ö \T1/cmr/m/n/9 sp1: Un-lock-ing mod-u-lar in-ter-op-er-abil-ity.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 81--84
+\T1/cmr/m/n/9 https://university.mitosis.org/ibc-eureka-meets-mitosis-unlocking-modular-
+ []
+
+
+Underfull \hbox (badness 1389) in paragraph at lines 86--90
+[]\T1/cmr/m/n/9 Vesely, P., Gurkan, K., Straka, M., Gabi-zon, A., Jo-vanovic, P., Kon-stan-
+ []
+
+
+Underfull \hbox (badness 3449) in paragraph at lines 86--90
+\T1/cmr/m/n/9 topou-los, G., Oines, A., Ol-szewski, M., Tromer, E.: Plumo: An ul-tra-
+ []
+
+) [19] (./main.aux) ) 
+Here is how much of TeX's memory you used:
+ 6441 strings out of 478268
+ 152674 string characters out of 5846347
+ 446867 words of memory out of 5000000
+ 24592 multiletter control sequences out of 15000+600000
+ 478581 words of font info for 45 fonts, out of 8000000 for 9000
+ 1141 hyphenation exceptions out of 8191
+ 71i,11n,79p,1068b,512s stack positions out of 10000i,1000n,20000p,200000b,200000s
+{/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}{/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/cm-super/sfbx0900.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/cm-super/sfrm0900.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/cm-super/sfti1000.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb>
+Output written on main.pdf (19 pages, 765480 bytes).
+PDF statistics:
+ 187 PDF objects out of 1000 (max. 8388607)
+ 109 compressed objects within 2 object streams
+ 0 named destinations out of 1000 (max. 500000)
+ 36 words of extra memory for PDF output out of 10000 (max. 10000000)
+

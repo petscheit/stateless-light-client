@@ -1,0 +1,91 @@
+\begin{thebibliography}{10}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{URL }
+\providecommand{\doi}[1]{https://doi.org/#1}
+
+\bibitem{Aumayr2024Blink}
+Aumayr, L., Avarikioti, Z., Maffei, M., Scaffino, G., Zindros, D.: Blink: An
+  optimal proof of proof-of-work. Tech. rep., IACR Cryptology ePrint Archive
+  (2024)
+
+\bibitem{Badertscher2018Samasika}
+Badertscher, C., Gazi, P., Kiayias, A., Russell, A., Zikas, V.: Ouroboros
+  samasika: A provably secure blockchain protocol for dynamic availability. In:
+  ACM Conference on Computer and Communications Security (CCS). pp. 913--930.
+  ACM (2018)
+
+\bibitem{Bonneau2020Coda}
+Bonneau, J., Meckler, I., Rao, V., Shapiro, E.: Coda: Decentralized
+  cryptocurrency at scale. Tech. Rep. 2020/352, IACR Cryptology ePrint Archive
+  (2020), \url{https://eprint.iacr.org/2020/352}
+
+\bibitem{Bonnet2020Stateless}
+Bonnet, F., Bramas, Q., Défago, X.: Stateless distributed ledgers (2020),
+  \url{https://arxiv.org/abs/2006.10985}
+
+\bibitem{Bunz2020FlyClient}
+B{\"u}nz, B., Kiffer, L., Luu, L., Zamani, M.: Flyclient: Super-light clients
+  for cryptocurrencies. In: IEEE Symposium on Security and Privacy. pp.
+  928--946. IEEE (2020)
+
+\bibitem{Chatzigiannis2021SoK}
+Chatzigiannis, P., Baldimtsi, F., Chalkias, K.: {SoK}: Blockchain light
+  clients. Tech. Rep. 2021/1657, IACR Cryptology ePrint Archive (2021),
+  \url{https://eprint.iacr.org/2021/1657}
+
+\bibitem{Ethereum2025ConsensusSpecs}
+{Ethereum}: ethereum/consensus-specs.
+  https://github.com/ethereum/consensus-specs (jul 9 2025),
+  \url{https://github.com/ethereum/consensus-specs}
+
+\bibitem{Prime2025Garaga}
+{FeltroidPrime}: keep-starknet-strange/garaga.
+  https://github.com/keep-starknet-strange/garaga (jun 23 2025),
+  \url{https://github.com/keep-starknet-strange/garaga}
+
+\bibitem{Goel2022IBCZKSnarks}
+Goel, G., Jain, J.: {B}ringing {I}{B}{C} to {E}thereum using {Z}{K}-{S}narks.
+  \url{https://ethresear.ch/t/13634} (2022), [Accessed 14-07-2025]
+
+\bibitem{Goes2020IBC}
+Goes, C.: The inter-blockchain communication protocol: An overview.
+  arXiv:2006.15918 (2020), \url{https://arxiv.org/abs/2006.15918}
+
+\bibitem{Habock2024CircleSTARKs}
+Haböck, U., Levit, D., Papini, S.: Circle {STARKs}. Cryptology {ePrint}
+  Archive, Paper 2024/278 (2024), \url{https://eprint.iacr.org/2024/278}
+
+\bibitem{Kiayias2020Nipopow}
+Kiayias, A., Miller, A., Zindros, D.: Non-interactive proofs of proof-of-work.
+  In: Financial Cryptography and Data Security (FC). LNCS, vol. 12059, pp.
+  505--522. Springer (2020)
+
+\bibitem{Nakamoto2008Bitcoin}
+Nakamoto, S.: Bitcoin: A peer-to-peer electronic cash system.
+  \url{https://bitcoin.org/bitcoin.pdf} (2008), white paper
+
+\bibitem{StarkWare2025STwo}
+{StarkWare}: S-two: A high-performance stark prover.
+  \url{https://starkware.co/blog/s-two-prover} (2025)
+
+\bibitem{StarkWare2023Stone}
+{StarkWare Industries}: Stone prover: Cairo stark recursive proof system.
+  Open-sourced implementation, Apache 2.0 license, Aug 2023. Available:
+  \url{https://github.com/StarkWare-Libs/stone} (2023)
+
+\bibitem{Succinct2023Telepathy}
+{Succinct Labs}: Telepathy protocol documentation.
+  \url{https://docs.telepathy.xyz/telepathy-protocol/overview} (2023)
+
+\bibitem{Succinct2025SP1}
+{Succinct Labs}: Ibc eureka × sp1: Unlocking modular interoperability.
+  \url{https://university.mitosis.org/ibc-eureka-meets-mitosis-unlocking-modular-interoperability-with-succincts-sp1}
+  (2025)
+
+\bibitem{Gabizon2021Plumo}
+Vesely, P., Gurkan, K., Straka, M., Gabizon, A., Jovanovic, P.,
+  Konstantopoulos, G., Oines, A., Olszewski, M., Tromer, E.: Plumo: An
+  ultralight blockchain client. Cryptology {ePrint} Archive, Paper 2021/1361
+  (2021), \url{https://eprint.iacr.org/2021/1361}
+
+\end{thebibliography}
