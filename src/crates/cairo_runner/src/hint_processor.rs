@@ -1,6 +1,6 @@
 use std::{any::Any, collections::HashMap};
 
-use crate::recursive_epoch::{RecursiveEpochUpdateCairo, HINT_WRITE_EXPECTED_PROOF_OUTPUT};
+use crate::recursive_epoch::{CommitteeUpdateDataCairo, RecursiveEpochUpdateCairo, HINT_WRITE_EXPECTED_PROOF_OUTPUT};
 use cairo_vm::{
     hint_processor::{
         builtin_hint_processor::builtin_hint_processor_definition::{
@@ -34,7 +34,7 @@ use super::hints;
 // };
 use super::recursive_epoch::{
     HINT_WRITE_COMMITTEE_UPDATE_INPUTS, HINT_WRITE_EPOCH_UPDATE_INPUTS,
-    HINT_WRITE_STARK_PROOF_INPUTS,
+    HINT_WRITE_STARK_PROOF_INPUTS, HINT_WRITE_COMMITTEE_UPDATE_DATA,
 };
 
 pub type HintImpl = fn(
@@ -48,15 +48,17 @@ pub struct CustomHintProcessor {
     hints: HashMap<String, HintImpl>,
     // Add the builtin hint processor
     builtin_hint_proc: BuiltinHintProcessor,
-    pub recursive_epoch_update: RecursiveEpochUpdateCairo,
+    // pub recursive_epoch_update: RecursiveEpochUpdateCairo,
+    pub committee_update_data: CommitteeUpdateDataCairo,
 }
 
 impl CustomHintProcessor {
-    pub fn new(recursive_epoch_update: RecursiveEpochUpdateCairo) -> Self {
+    pub fn new(committee_update_data: CommitteeUpdateDataCairo) -> Self {
         Self {
             hints: Self::hints(),
             builtin_hint_proc: BuiltinHintProcessor::new_empty(),
-            recursive_epoch_update,
+            // recursive_epoch_update,
+            committee_update_data,
         }
     }
 
@@ -198,18 +200,21 @@ impl HintProcessorLogic for CustomHintProcessor {
         if let Some(hpd) = hint_data.downcast_ref::<HintProcessorData>() {
             let hint_code = hpd.code.as_str();
 
+            // HINT_WRITE_EPOCH_UPDATE_INPUTS => {
+            //     self.write_epoch_update_inputs(vm, exec_scopes, hpd, constants)
+            // }
+            // HINT_WRITE_STARK_PROOF_INPUTS => {
+            //     self.write_stark_proof_inputs(vm, exec_scopes, hpd, constants)
+            // }
+            // HINT_WRITE_COMMITTEE_UPDATE_INPUTS => {
+            //     self.write_committee_update_inputs(vm, exec_scopes, hpd, constants)
+            // }
+            // HINT_WRITE_EXPECTED_PROOF_OUTPUT => {
+            //     self.write_expected_proof_output(vm, exec_scopes, hpd, constants)
+            // }
             let res = match hint_code {
-                HINT_WRITE_EPOCH_UPDATE_INPUTS => {
-                    self.write_epoch_update_inputs(vm, exec_scopes, hpd, constants)
-                }
-                HINT_WRITE_STARK_PROOF_INPUTS => {
-                    self.write_stark_proof_inputs(vm, exec_scopes, hpd, constants)
-                }
-                HINT_WRITE_COMMITTEE_UPDATE_INPUTS => {
-                    self.write_committee_update_inputs(vm, exec_scopes, hpd, constants)
-                }
-                HINT_WRITE_EXPECTED_PROOF_OUTPUT => {
-                    self.write_expected_proof_output(vm, exec_scopes, hpd, constants)
+                HINT_WRITE_COMMITTEE_UPDATE_DATA => {
+                    self.write_committee_update_data(vm, exec_scopes, hpd, constants)
                 }
                 _ => Err(HintError::UnknownHint(
                     hint_code.to_string().into_boxed_str(),

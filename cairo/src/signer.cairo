@@ -1,8 +1,9 @@
-from starkware.cairo.common.cairo_builtins import ModBuiltin
+from starkware.cairo.common.cairo_builtins import ModBuiltin, PoseidonBuiltin
 from starkware.cairo.common.uint256 import Uint256
 from starkware.cairo.common.memcpy import memcpy
 from starkware.cairo.common.alloc import alloc
-
+from debug import print_felt_hex, print_string
+from starkware.cairo.common.builtin_poseidon.poseidon import poseidon_hash_many
 from definitions import G1Point
 from ec_ops import add_ec_points, is_on_curve_g1, sub_ec_points
 from sha import HashUtils, SHA256
@@ -216,4 +217,26 @@ func commit_committee_key{range_check_ptr, sha256_ptr: felt*, pow2_array: felt*}
     let committee_point_hash = HashUtils.chunks_to_uint256(committee_point_hash_chunks);
 
     return committee_point_hash;
+}
+
+func validator_commitment{range_check_ptr, poseidon_ptr: PoseidonBuiltin*}(
+    point: G1Point
+) -> (commitment: felt, pubkey: G1Point) {
+    alloc_locals;
+
+    let (chunks: felt*) = alloc();
+    assert [chunks] = point.x.d3;
+    assert [chunks + 1] = point.x.d2;
+    assert [chunks + 2] = point.x.d1;
+    assert [chunks + 3] = point.x.d0;
+    assert [chunks + 4] = point.y.d3;
+    assert [chunks + 5] = point.y.d2;
+    assert [chunks + 6] = point.y.d1;
+    assert [chunks + 7] = point.y.d0;
+
+    let (commitment) = poseidon_hash_many(8, chunks);
+
+    print_string('commitment');
+    print_felt_hex(commitment);
+    return (commitment=commitment, pubkey=point);
 }

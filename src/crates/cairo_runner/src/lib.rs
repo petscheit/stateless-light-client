@@ -18,6 +18,8 @@ use recursive_epoch::RecursiveEpochUpdateCairo;
 use std::io;
 use std::{io::Write, path::Path};
 
+use crate::recursive_epoch::CommitteeUpdateDataCairo;
+
 fn load_program(path: &str) -> Result<Program, Error> {
     // Check if it's an absolute path that doesn't exist, try relative
     let final_path = if path.starts_with('/') && !std::path::Path::new(path).exists() {
@@ -43,7 +45,7 @@ fn load_program(path: &str) -> Result<Program, Error> {
     Ok(program)
 }
 
-pub fn run(path: &str, update: RecursiveEpochUpdateCairo) -> Result<CairoPie, Error> {
+pub fn run_committee_update(path: &str, update: CommitteeUpdateDataCairo) -> Result<CairoPie, Error> {
     let program = load_program(path)?;
     let cairo_run_config = cairo_run::CairoRunConfig {
         allow_missing_builtins: Some(true),
@@ -51,8 +53,7 @@ pub fn run(path: &str, update: RecursiveEpochUpdateCairo) -> Result<CairoPie, Er
         ..Default::default()
     };
     let mut hint_processor = CustomHintProcessor::new(update);
-    let mut exec_scopes = ExecutionScopes::new();
-    exec_scopes.insert_value("program_object", program.clone());
+    let exec_scopes = ExecutionScopes::new();
 
     let cairo_runner = cairo_run_program_with_initial_scope(
         &program,
@@ -60,39 +61,59 @@ pub fn run(path: &str, update: RecursiveEpochUpdateCairo) -> Result<CairoPie, Er
         &mut hint_processor,
         exec_scopes,
     )?;
-    tracing::info!("{:?}", cairo_runner.get_execution_resources());
-
-    let pie = cairo_runner.get_cairo_pie()?;
-    Ok(pie)
+    Ok(cairo_runner.get_cairo_pie()?)
 }
 
-pub fn run_stwo(path: &str, update: RecursiveEpochUpdateCairo, output_dir: &str) -> Result<(), Error> {
-    let program = load_program(path)?;
-    let cairo_run_config = cairo_run::CairoRunConfig {
-        allow_missing_builtins: None, // Optional
-        layout: LayoutName::all_cairo_stwo,
-        relocate_mem: true,
-        trace_enabled: true,
-        proof_mode: true,
-        ..Default::default()
-    };
+// pub fn run(path: &str, update: RecursiveEpochUpdateCairo) -> Result<CairoPie, Error> {
+//     let program = load_program(path)?;
+//     let cairo_run_config = cairo_run::CairoRunConfig {
+//         allow_missing_builtins: Some(true),
+//         layout: LayoutName::all_cairo,
+//         ..Default::default()
+//     };
+//     let mut hint_processor = CustomHintProcessor::new(update);
+//     let mut exec_scopes = ExecutionScopes::new();
+//     exec_scopes.insert_value("program_object", program.clone());
 
-    let mut hint_processor = CustomHintProcessor::new(update);
-    let mut exec_scopes = ExecutionScopes::new();
-    exec_scopes.insert_value("program_object", program.clone());
+//     let cairo_runner = cairo_run_program_with_initial_scope(
+//         &program,
+//         &cairo_run_config,
+//         &mut hint_processor,
+//         exec_scopes,
+//     )?;
+//     tracing::info!("{:?}", cairo_runner.get_execution_resources());
 
-    let cairo_runner = cairo_run_program_with_initial_scope(
-        &program,
-        &cairo_run_config,
-        &mut hint_processor,
-        exec_scopes,
-    )?;
+//     let pie = cairo_runner.get_cairo_pie()?;
+//     Ok(pie)
+// }
 
-    tracing::info!("{:?}", cairo_runner.get_execution_resources());
+// pub fn run_stwo(path: &str, update: RecursiveEpochUpdateCairo, output_dir: &str) -> Result<(), Error> {
+//     let program = load_program(path)?;
+//     let cairo_run_config = cairo_run::CairoRunConfig {
+//         allow_missing_builtins: None, // Optional
+//         layout: LayoutName::all_cairo_stwo,
+//         relocate_mem: true,
+//         trace_enabled: true,
+//         proof_mode: true,
+//         ..Default::default()
+//     };
 
-    generate_stwo_files(&cairo_runner, output_dir)?;
-    Ok(())
-}
+//     let mut hint_processor = CustomHintProcessor::new(update);
+//     let mut exec_scopes = ExecutionScopes::new();
+//     exec_scopes.insert_value("program_object", program.clone());
+
+//     let cairo_runner = cairo_run_program_with_initial_scope(
+//         &program,
+//         &cairo_run_config,
+//         &mut hint_processor,
+//         exec_scopes,
+//     )?;
+
+//     tracing::info!("{:?}", cairo_runner.get_execution_resources());
+
+//     generate_stwo_files(&cairo_runner, output_dir)?;
+//     Ok(())
+// }
 
 fn generate_stwo_files(
     cairo_runner: &cairo_vm::vm::runners::cairo_runner::CairoRunner,

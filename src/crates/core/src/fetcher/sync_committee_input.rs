@@ -3,9 +3,10 @@ use bls12_381::{G1Affine, G1Projective};
 use serde::{Deserialize, Serialize};
 use beacon_state_proof::state_proof_fetcher::{StateProofFetcher, SyncCommitteeProof, TreeHash};
 use sha2::{Digest, Sha256};
+use starknet_crypto::{poseidon_hash, poseidon_hash_many};
 use thiserror::Error;
 
-use crate::utils::hashing::get_committee_hash;
+use crate::{fetcher::recursive_epoch_input::G1Point, utils::hashing::get_committee_hash};
 
 /// Represents the public keys of sync committee validators and their aggregate
 #[derive(Debug, Clone)]
@@ -27,6 +28,9 @@ pub struct SyncCommitteeData {
     pub next_aggregate_sync_committee: FixedBytes<48>,
     /// Root hash of committee keys
     pub committee_keys_root: FixedBytes<32>,
+    // pub validator_pubs: Vec<FixedBytes<48>>,
+    // /// Precomputed root of the committee key merkle tree (poseidon)
+    // pub precomputed_root: FixedBytes<32>,
 }
 
 impl SyncCommitteeData {
@@ -58,6 +62,49 @@ impl SyncCommitteeData {
         crate::utils::merkle::sha256::hash_path(self.next_sync_committee_branch.clone(), leaf, 55)
     }
 }
+
+// impl SyncCommitteeData {
+//     pub fn new(committee_proof: SyncCommitteeProof) -> Self {
+//         let mut validator_pubs: Vec<FixedBytes<48>> = committee_proof
+//             .next_sync_committee
+//             .pubkeys
+//             .iter()
+//             .map(|pubkey| FixedBytes::from_slice(pubkey.as_serialized()))
+//             .collect();
+//         validator_pubs.sort();
+
+//         let precomputed_root = FixedBytes::from([0u8; 32]);
+        
+//         // Self::precompute_root(validator_pubs.clone());
+
+//         let committee_keys_root = &committee_proof.next_sync_committee.pubkeys.tree_hash_root();
+
+//         Self {
+//             beacon_slot: committee_proof.slot,
+//             next_sync_committee_branch: committee_proof
+//                 .proof
+//                 .into_iter()
+//                 .map(|bytes| FixedBytes::from_slice(bytes.as_slice()))
+//                 .collect(),
+//             next_aggregate_sync_committee: FixedBytes::from_slice(
+//                 committee_proof
+//                     .next_sync_committee
+//                     .aggregate_pubkey
+//                     .as_serialized(),
+//             ),
+//             committee_keys_root: FixedBytes::from_slice(committee_keys_root.as_slice()),
+//             validator_pubs,
+//             precomputed_root,
+//         }
+//     }
+
+//     // fn precompute_root(validator_pubs: Vec<FixedBytes<48>>) -> FixedBytes<32> {
+//     //     // I first want to hash the validator pubkeys with poseidon hash
+
+//     //     let key_hashes = validator_pubs.iter().map(|pubkey| poseidon_hash_many(pubkey)).collect();
+        
+//     // }
+// }
 
 impl From<SyncCommitteeProof> for SyncCommitteeData {
     fn from(committee_proof: SyncCommitteeProof) -> Self {
@@ -139,5 +186,44 @@ pub enum SyncCommitteeError {
 impl From<beacon_state_proof::error::Error> for SyncCommitteeError {
     fn from(error: beacon_state_proof::error::Error) -> Self {
         SyncCommitteeError::BeaconStateProof(error)
+    }
+}
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CommitteeUpdateData {
+    pub beacon_slot: u64,
+    pub next_sync_committee_branch: Vec<FixedBytes<32>>,
+    pub next_aggregate_sync_committee: FixedBytes<48>,
+    pub committee_keys_root: FixedBytes<32>,
+    pub validator_pubs: Vec<FixedBytes<48>>,
+}
+
+impl CommitteeUpdateData {
+    pub async fn new(client: &crate::clients::beacon_chain::BeaconRpcClient, slot: u64) -> Result<CommitteeUpdateData, SyncCommitteeError> {
+        let state_proof_fetcher = StateProofFetcher::new(client.rpc_url.clone());
+        let proof = state_proof_fetcher
+            .fetch_next_sync_committee_proof(slot)
+            .await?;
+        println!("sync_committee_data: {:#?}", proof);
+
+        let validator_pubs = proof.next_sync_committee.pubkeys.iter().map(|pubkey| {
+            let affine = G1Affine::from_compressed(&pubkey.serialize()).unwrap();
+            FixedBytes::from_slice(affine.to_compressed().as_slice())
+        }).collect::<Vec<FixedBytes<48>>>();
+        
+
+        let data = CommitteeUpdateData {
+            beacon_slot: proof.slot,
+            next_sync_committee_branch: proof.proof.clone(),
+            next_aggregate_sync_committee: FixedBytes::from_slice(proof.next_sync_committee.aggregate_pubkey.as_serialized()),
+            committee_keys_root: FixedBytes::from_slice(proof.next_sync_committee.pubkeys.tree_hash_root().as_slice()),
+            validator_pubs
+        };
+
+        println!("committee keys root: {:?}", data.committee_keys_root);
+        // println!("data: {:#?}", data);
+        Ok(data)
+
     }
 }

@@ -212,7 +212,7 @@ impl CairoType for Felt {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct G1PointCairo {
     x: UInt384,
     y: UInt384,
@@ -276,7 +276,7 @@ impl CairoType for G2PointCairo {
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone)]
 #[serde(try_from = "String")]
-pub struct Bytes32([u8; 32]);
+pub struct Bytes32(pub [u8; 32]);
 
 impl TryFrom<String> for Bytes32 {
     type Error = String;
@@ -374,6 +374,8 @@ impl CairoType for Bytes32 {
         address: Relocatable,
     ) -> Result<Relocatable, HintError> {
         let limbs = self.to_limbs();
+        println!("low: {:?}", limbs[0].to_hex_string());
+        println!("high: {:?}", limbs[1].to_hex_string());
 
         vm.insert_value((address + 0)?, limbs[0])?;
         vm.insert_value((address + 1)?, limbs[1])?;

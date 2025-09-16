@@ -17,7 +17,7 @@ use cairo_vm::{
     Felt252,
 };
 use garaga_zero::types::CairoType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use beacon_types::TreeHash;
 use serde_json::Value;
 
@@ -88,7 +88,10 @@ impl ExecutionPayloadHeaderCairo {
 
         // Convert u64 to padded bytes
         fn u64_to_uint256(value: u64) -> Bytes32 {
-            Bytes32::from_u64(value)
+            println!("Value: {}", value);
+            let res = Bytes32::from_u64(value);
+            println!("Res: {:?}", hex::encode(res.0));
+            res
         }
 
         macro_rules! extract_common_fields {
@@ -150,174 +153,251 @@ pub struct SyncCommitteeDataCairo {
     pub committee_keys_root: Uint256Bits32,
 }
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct CommitteeUpdateDataCairo {
+    pub slot: Felt,
+    pub path: Vec<Uint256Bits32>,
+    pub next_aggregate_sync_committee: UInt384,
+    pub validator_pubs: Vec<UInt384>,
+    pub committee_keys_root: Uint256Bits32,
+}
+
+pub const HINT_WRITE_COMMITTEE_UPDATE_DATA: &str = r#"write_committee_update_data()"#;
 pub const HINT_WRITE_EPOCH_UPDATE_INPUTS: &str = r#"write_epoch_update_inputs()"#;
 pub const HINT_WRITE_STARK_PROOF_INPUTS: &str = r#"write_stark_proof_inputs()"#;
 pub const HINT_WRITE_COMMITTEE_UPDATE_INPUTS: &str = r#"write_committee_update_inputs()"#;
 pub const HINT_WRITE_EXPECTED_PROOF_OUTPUT: &str = r#"load_expected_proof_output()"#;
 
 impl CustomHintProcessor {
-    pub fn write_epoch_update_inputs(
-        &self,
-        vm: &mut VirtualMachine,
-        _exec_scopes: &mut ExecutionScopes,
-        hint_data: &HintProcessorData,
-        _constants: &HashMap<String, Felt252>,
-    ) -> Result<(), HintError> {
-        let epoch_update = &self.recursive_epoch_update.inputs.epoch_update;
-        let epoch_update_ptr = get_relocatable_from_var_name(
-            "epoch_update",
-            vm,
-            &hint_data.ids_data,
-            &hint_data.ap_tracking,
-        )?;
-        write_epoch_update(epoch_update_ptr, epoch_update, vm)?;
+    
+    // pub fn write_epoch_update_inputs(
+    //     &self,
+    //     vm: &mut VirtualMachine,
+    //     _exec_scopes: &mut ExecutionScopes,
+    //     hint_data: &HintProcessorData,
+    //     _constants: &HashMap<String, Felt252>,
+    // ) -> Result<(), HintError> {
+    //     let epoch_update = &self.recursive_epoch_update.inputs.epoch_update;
+    //     let epoch_update_ptr = get_relocatable_from_var_name(
+    //         "epoch_update",
+    //         vm,
+    //         &hint_data.ids_data,
+    //         &hint_data.ap_tracking,
+    //     )?;
+    //     write_epoch_update(epoch_update_ptr, epoch_update, vm)?;
 
-        let is_genesis_ptr = get_relocatable_from_var_name(
-            "is_genesis",
-            vm,
-            &hint_data.ids_data,
-            &hint_data.ap_tracking,
-        )?;
-        let is_genesis = match &self.recursive_epoch_update.inputs.stark_proof {
-            Some(_) => 0,
-            None => 1,
-        };
-        vm.insert_value(is_genesis_ptr, Felt252::from(is_genesis))?;
+    //     let is_genesis_ptr = get_relocatable_from_var_name(
+    //         "is_genesis",
+    //         vm,
+    //         &hint_data.ids_data,
+    //         &hint_data.ap_tracking,
+    //     )?;
+    //     let is_genesis = match &self.recursive_epoch_update.inputs.stark_proof {
+    //         Some(_) => 0,
+    //         None => 1,
+    //     };
+    //     vm.insert_value(is_genesis_ptr, Felt252::from(is_genesis))?;
 
-        let is_committee_update_ptr = get_relocatable_from_var_name(
-            "is_committee_update",
-            vm,
-            &hint_data.ids_data,
-            &hint_data.ap_tracking,
-        )?;
-        let is_committee_update = match &self.recursive_epoch_update.inputs.sync_committee_update {
-            Some(_) => 1,
-            None => 0,
-        };
-        vm.insert_value(is_committee_update_ptr, Felt252::from(is_committee_update))?;
+    //     let is_committee_update_ptr = get_relocatable_from_var_name(
+    //         "is_committee_update",
+    //         vm,
+    //         &hint_data.ids_data,
+    //         &hint_data.ap_tracking,
+    //     )?;
+    //     let is_committee_update = match &self.recursive_epoch_update.inputs.sync_committee_update {
+    //         Some(_) => 1,
+    //         None => 0,
+    //     };
+    //     vm.insert_value(is_committee_update_ptr, Felt252::from(is_committee_update))?;
         
-        let program_hash_ptr = get_relocatable_from_var_name(
-            "program_hash",
-            vm,
-            &hint_data.ids_data,
-            &hint_data.ap_tracking,
-        )?;
-        let program_hash = Felt252::from_hex_unchecked(
-            "0x6305ea579daa2cd35f92ce5c41fa3467a7b44c4d69f9849844aff9d552620e",
-        );
-        vm.insert_value(program_hash_ptr, program_hash)?;
+    //     let program_hash_ptr = get_relocatable_from_var_name(
+    //         "program_hash",
+    //         vm,
+    //         &hint_data.ids_data,
+    //         &hint_data.ap_tracking,
+    //     )?;
+    //     let program_hash = Felt252::from_hex_unchecked(
+    //         "0x6305ea579daa2cd35f92ce5c41fa3467a7b44c4d69f9849844aff9d552620e",
+    //     );
+    //     vm.insert_value(program_hash_ptr, program_hash)?;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    pub fn write_expected_proof_output(
-        &self,
-        vm: &mut VirtualMachine,
-        _exec_scopes: &mut ExecutionScopes,
-        hint_data: &HintProcessorData,
-        _constants: &HashMap<String, Felt252>,
-    ) -> Result<(), HintError> {
+    // pub fn write_expected_proof_output(
+    //     &self,
+    //     vm: &mut VirtualMachine,
+    //     _exec_scopes: &mut ExecutionScopes,
+    //     hint_data: &HintProcessorData,
+    //     _constants: &HashMap<String, Felt252>,
+    // ) -> Result<(), HintError> {
 
-        let expected_output_ptr = get_relocatable_from_var_name(
-            "expected_proof_output",
-            vm,
-            &hint_data.ids_data,
-            &hint_data.ap_tracking,
-        )?;
+    //     let expected_output_ptr = get_relocatable_from_var_name(
+    //         "expected_proof_output",
+    //         vm,
+    //         &hint_data.ids_data,
+    //         &hint_data.ap_tracking,
+    //     )?;
         
-        // Now write the struct data to the new segment
-        let values = &self.recursive_epoch_update.inputs.stark_proof_output.as_ref().unwrap();
+    //     // Now write the struct data to the new segment
+    //     let values = &self.recursive_epoch_update.inputs.stark_proof_output.as_ref().unwrap();
 
-        let mut current_ptr = expected_output_ptr;
-        current_ptr = values.beacon_header_root.to_memory(vm, current_ptr)?;
-        current_ptr = values.beacon_state_root.to_memory(vm, current_ptr)?;
-        current_ptr = values.beacon_height.to_memory(vm, current_ptr)?;
-        current_ptr = values.n_signers.to_memory(vm, current_ptr)?;
-        current_ptr = values.execution_header_root.to_memory(vm, current_ptr)?;
-        current_ptr = values.execution_header_height.to_memory(vm, current_ptr)?;
-        current_ptr = values.current_committee_hash.to_memory(vm, current_ptr)?;
-        let _current_ptr = values.next_committee_hash.to_memory(vm, current_ptr)?;
+    //     let mut current_ptr = expected_output_ptr;
+    //     current_ptr = values.beacon_header_root.to_memory(vm, current_ptr)?;
+    //     current_ptr = values.beacon_state_root.to_memory(vm, current_ptr)?;
+    //     current_ptr = values.beacon_height.to_memory(vm, current_ptr)?;
+    //     current_ptr = values.n_signers.to_memory(vm, current_ptr)?;
+    //     current_ptr = values.execution_header_root.to_memory(vm, current_ptr)?;
+    //     current_ptr = values.execution_header_height.to_memory(vm, current_ptr)?;
+    //     current_ptr = values.current_committee_hash.to_memory(vm, current_ptr)?;
+    //     let _current_ptr = values.next_committee_hash.to_memory(vm, current_ptr)?;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    pub fn write_stark_proof_inputs(
-        &self,
-        _vm: &mut VirtualMachine,
-        exec_scopes: &mut ExecutionScopes,
-        _hint_data: &HintProcessorData,
-        _constants: &HashMap<String, Felt252>,
-    ) -> Result<(), HintError> {
-        if let Some(stark_proof) = &self.recursive_epoch_update.inputs.stark_proof {
-            let proof_string = serde_json::json!({
-                "proof": stark_proof
-            })
-            .to_string();
-            exec_scopes.insert_value("program_input", proof_string);
-        } else {
-            panic!("Stark proof not found");
-        }
+    // pub fn write_stark_proof_inputs(
+    //     &self,
+    //     _vm: &mut VirtualMachine,
+    //     exec_scopes: &mut ExecutionScopes,
+    //     _hint_data: &HintProcessorData,
+    //     _constants: &HashMap<String, Felt252>,
+    // ) -> Result<(), HintError> {
+    //     if let Some(stark_proof) = &self.recursive_epoch_update.inputs.stark_proof {
+    //         let proof_string = serde_json::json!({
+    //             "proof": stark_proof
+    //         })
+    //         .to_string();
+    //         exec_scopes.insert_value("program_input", proof_string);
+    //     } else {
+    //         panic!("Stark proof not found");
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    pub fn write_committee_update_inputs(
+    pub fn write_committee_update_data(
         &self,
         vm: &mut VirtualMachine,
         _exec_scopes: &mut ExecutionScopes,
         hint_data: &HintProcessorData,
         _constants: &HashMap<String, Felt252>,
     ) -> Result<(), HintError> {
-        if let Some(sync_committee_update) =
-            &self.recursive_epoch_update.inputs.sync_committee_update
+        let committee_update_data = &self.committee_update_data;
+
+        let ptr = get_relocatable_from_var_name(
+            "committee_update_data",
+            vm,
+            &hint_data.ids_data,
+            &hint_data.ap_tracking,
+        )?;
+
+        let ptr_start = ptr;
+        println!("start ptr: {:?}", ptr_start);
+
+        let ptr = committee_update_data.slot.to_memory(vm, ptr)?;
+        println!("slot ptr: {:?}", ptr);
+
+        let path_ptr = vm.add_memory_segment();
+        vm.insert_value(ptr, path_ptr)?;
+        let ptr = (ptr + 1)?;
+        println!("path ptr: {:?}", ptr);
+
+        for (i, branch) in committee_update_data
+            .path
+            .iter()
+            .enumerate()
         {
-            let aggregate_committee_key_ptr = get_relocatable_from_var_name(
-                "aggregate_committee_key",
-                vm,
-                &hint_data.ids_data,
-                &hint_data.ap_tracking,
-            )?;
-            sync_committee_update
-                .next_aggregate_sync_committee
-                .to_memory(vm, aggregate_committee_key_ptr)?;
-
-            let committee_keys_root_ptr = get_ptr_from_var_name(
-                "committee_keys_root",
-                vm,
-                &hint_data.ids_data,
-                &hint_data.ap_tracking,
-            )?;
-            sync_committee_update
-                .committee_keys_root
-                .to_memory(vm, committee_keys_root_ptr)?;
-
-            let path_ptr =
-                get_ptr_from_var_name("path", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
-
-            for (i, branch) in sync_committee_update
-                .next_sync_committee_branch
-                .iter()
-                .enumerate()
-            {
-                let branch_segment = vm.add_memory_segment();
-                branch.to_memory(vm, branch_segment)?;
-                vm.insert_value((path_ptr + i)?, branch_segment)?;
-            }
-
-            let path_len_ptr = get_relocatable_from_var_name(
-                "path_len",
-                vm,
-                &hint_data.ids_data,
-                &hint_data.ap_tracking,
-            )?;
-            let path_len = Felt252::from(sync_committee_update.next_sync_committee_branch.len());
-            vm.insert_value(path_len_ptr, path_len)?;
-
-            Ok(())
-        } else {
-            panic!("Committee input not found");
+            let branch_segment = vm.add_memory_segment();
+            branch.to_memory(vm, branch_segment)?;
+            vm.insert_value((path_ptr + i)?, branch_segment)?;
         }
+
+        let path_len = Felt252::from(committee_update_data.path.len());
+        vm.insert_value(ptr, path_len)?;
+        let ptr = (ptr + 1)?;
+
+        let ptr = committee_update_data.next_aggregate_sync_committee.to_memory(vm, ptr)?;
+        let mut validator_pubs_ptr = vm.add_memory_segment();
+        vm.insert_value(ptr, validator_pubs_ptr)?;
+        let ptr = (ptr + 1)?;
+
+        for validator_pub in committee_update_data.validator_pubs.clone() {
+            validator_pubs_ptr = validator_pub.to_memory(vm, validator_pubs_ptr)?;
+        }
+
+        let committee_keys_root_ptr = vm.add_memory_segment();
+        vm.insert_value(ptr, committee_keys_root_ptr)?;
+
+        // let ptr = (ptr + 1)?;
+        
+        committee_update_data.committee_keys_root.to_memory(vm, committee_keys_root_ptr)?;
+        // println!("committee keys root ptr: {:?}", ptr);
+
+        // println!("end ptr: {:?}", ptr);
+
+        // assert_eq!(ptr, (ptr_start + 9)?);
+
+        Ok(())
     }
+
+    // pub fn write_committee_update_inputs(
+    //     &self,
+    //     vm: &mut VirtualMachine,
+    //     _exec_scopes: &mut ExecutionScopes,
+    //     hint_data: &HintProcessorData,
+    //     _constants: &HashMap<String, Felt252>,
+    // ) -> Result<(), HintError> {
+    //     if let Some(sync_committee_update) =
+    //         &self.recursive_epoch_update.inputs.sync_committee_update
+    //     {
+    //         let aggregate_committee_key_ptr = get_relocatable_from_var_name(
+    //             "aggregate_committee_key",
+    //             vm,
+    //             &hint_data.ids_data,
+    //             &hint_data.ap_tracking,
+    //         )?;
+    //         sync_committee_update
+    //             .next_aggregate_sync_committee
+    //             .to_memory(vm, aggregate_committee_key_ptr)?;
+
+    //         let committee_keys_root_ptr = get_ptr_from_var_name(
+    //             "committee_keys_root",
+    //             vm,
+    //             &hint_data.ids_data,
+    //             &hint_data.ap_tracking,
+    //         )?;
+    //         sync_committee_update
+    //             .committee_keys_root
+    //             .to_memory(vm, committee_keys_root_ptr)?;
+
+    //         let path_ptr =
+    //             get_ptr_from_var_name("path", vm, &hint_data.ids_data, &hint_data.ap_tracking)?;
+
+    //         for (i, branch) in sync_committee_update
+    //             .next_sync_committee_branch
+    //             .iter()
+    //             .enumerate()
+    //         {
+    //             let branch_segment = vm.add_memory_segment();
+    //             branch.to_memory(vm, branch_segment)?;
+    //             vm.insert_value((path_ptr + i)?, branch_segment)?;
+    //         }
+
+    //         let path_len_ptr = get_relocatable_from_var_name(
+    //             "path_len",
+    //             vm,
+    //             &hint_data.ids_data,
+    //             &hint_data.ap_tracking,
+    //         )?;
+    //         let path_len = Felt252::from(sync_committee_update.next_sync_committee_branch.len());
+    //         vm.insert_value(path_len_ptr, path_len)?;
+
+    //         Ok(())
+    //     } else {
+    //         panic!("Committee input not found");
+    //     }
+    // }
+    
 }
 
 pub fn write_epoch_update(
@@ -406,7 +486,7 @@ fn write_execution_header_proof(
     // Write leaf and index
     ptr = proof.leaf.to_memory(vm, ptr)?;
     ptr = proof.index.to_memory(vm, ptr)?;
-
+    println!("_____________________Writing payload fields!!!!!");
     // Create and write payload fields segment
     let payload_fields_segment = vm.add_memory_segment();
     vm.insert_value(ptr, payload_fields_segment)?;
@@ -416,6 +496,7 @@ fn write_execution_header_proof(
     for field in &proof.execution_payload_header {
         payload_fields_ptr = field.to_memory(vm, payload_fields_ptr)?;
     }
+    println!("_____________________Payload fields written!!!!!");
 
     Ok((ptr + 1)?)
 }

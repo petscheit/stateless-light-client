@@ -1,9 +1,9 @@
 
-use cairo_runner::{recursive_epoch::{BeaconHeaderCairo, EpochUpdateCairo, ExecutionHeaderProofCairo, ExecutionPayloadHeaderCairo, RecursiveEpochInputsCairo, RecursiveEpochUpdateCairo, RecursiveEpochOutputsCairo, SyncCommitteeDataCairo}, types::{Felt, G1PointCairo, G2PointCairo, UInt384, Uint256, Uint256Bits32}};
+use cairo_runner::{recursive_epoch::{BeaconHeaderCairo, CommitteeUpdateDataCairo, EpochUpdateCairo, ExecutionHeaderProofCairo, ExecutionPayloadHeaderCairo, RecursiveEpochInputsCairo, RecursiveEpochOutputsCairo, RecursiveEpochUpdateCairo, SyncCommitteeDataCairo}, types::{Felt, G1PointCairo, G2PointCairo, UInt384, Uint256, Uint256Bits32}};
 use cairo_vm::Felt252;
 use num_bigint::BigUint;
 
-use crate::fetcher::recursive_epoch_input::{EpochUpdate, G1Point, G2Point, RecursiveEpochInputs, RecursiveEpochOutput, RecursiveEpochUpdate};
+use crate::fetcher::{recursive_epoch_input::{EpochUpdate, G1Point, G2Point, RecursiveEpochInputs, RecursiveEpochOutput, RecursiveEpochUpdate}, sync_committee_input::CommitteeUpdateData};
 use crate::fetcher::sync_committee_input::SyncCommitteeData;
 
 impl From<RecursiveEpochUpdate> for RecursiveEpochUpdateCairo {
@@ -77,6 +77,33 @@ impl From<SyncCommitteeData> for SyncCommitteeDataCairo {
     }
 }
 
+impl From<CommitteeUpdateData> for CommitteeUpdateDataCairo {
+    fn from(val: CommitteeUpdateData) -> Self {
+        let branch = val
+            .next_sync_committee_branch
+            .iter()
+            .map(|b| Uint256Bits32(BigUint::from_bytes_be(b.as_slice())))
+            .collect::<Vec<Uint256Bits32>>();
+
+        CommitteeUpdateDataCairo {
+            slot: Felt(Felt252::from(val.beacon_slot)),
+            path: branch,
+            next_aggregate_sync_committee: UInt384(BigUint::from_bytes_be(
+                val.next_aggregate_sync_committee.as_slice(),
+            )),
+            validator_pubs: val
+                .validator_pubs
+                .iter()
+                .map(|n| UInt384(BigUint::from_bytes_be(n.as_slice())))
+                .collect::<Vec<UInt384>>(),
+            committee_keys_root: Uint256Bits32(BigUint::from_bytes_be(
+                val.committee_keys_root.as_slice(),
+            )),
+        }
+    }
+}
+
+
 impl From<EpochUpdate> for EpochUpdateCairo {
     fn from(val: EpochUpdate) -> Self {
         let beacon_header = BeaconHeaderCairo {
@@ -121,7 +148,6 @@ impl From<EpochUpdate> for EpochUpdateCairo {
             signature_point: val.signature_point.into(),
             aggregate_pub: val.aggregate_pub.into(),
             non_signers: val
-                
                 .non_signers
                 .iter()
                 .map(|n| n.clone().into())

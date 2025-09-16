@@ -1,4 +1,4 @@
-from definitions import G1Point, G2Point
+from definitions import G1Point, G2Point, UInt384
 from starkware.cairo.common.uint256 import Uint256
 
 struct SignerData {
@@ -54,4 +54,13 @@ struct CircuitOutput {
     execution_header_height: felt,
     current_committee_hash: Uint256,
     next_committee_hash: Uint256,
+}
+
+struct CommitteeUpdateData {
+    slot: felt,
+    path: felt**,
+    path_len: felt,
+    aggregate_committee_key: UInt384,
+    validator_pubs: UInt384*,
+    committee_keys_root: felt*,
 }

@@ -17,6 +17,7 @@ from cairo.src.verify_epoch import run_epoch_update
 from starkware.cairo.stark_verifier.core.stark import StarkProof
 from cairo.src.committee_update import run_committee_update
 from cairo.src.utils import felt_divmod
+from cairo.src.signer import validator_commitment
 
 const BOOTLOADER_PROGRAM_HASH = 0x5AB580B04E3532B6B18F81CFA654A05E29DD8E2352D88DF1E765A84072DB07;
 const SYNC_COMMITTEE_PERIOD = 8192;
@@ -42,79 +43,87 @@ func main{
     local program_hash: felt;
     %{ write_epoch_update_inputs() %}
 
-    if (is_genesis == 1) {
-        with pow2_array, sha256_ptr {
-            let (epoch_update_output) = handle_genesis_case(epoch_update);
-        }
-        let next_committee_hash = Uint256(low=0x0, high=0x0);
-        assert is_committee_update = 0;
-        write_circuit_output(epoch_output=epoch_update_output, next_committee_hash=next_committee_hash, is_committee_transition=0);
+    validator_commitment(epoch_update.signer_data.non_signers[0]);
 
-        SHA256.finalize(sha256_start_ptr=sha256_ptr_start, sha256_end_ptr=sha256_ptr);
+    validator_commitment(epoch_update.signer_data.non_signers[1]);
+    validator_commitment(epoch_update.signer_data.non_signers[2]);
 
-        return ();
-    } else {
-        print_string('recursive case');
 
-        local expected_proof_output: CircuitOutput;
-        %{ load_expected_proof_output() %}
 
-        let (previous_term, _) = felt_divmod(expected_proof_output.beacon_height, SYNC_COMMITTEE_PERIOD);
-        let (current_term, _) = felt_divmod(epoch_update.header.slot.low, SYNC_COMMITTEE_PERIOD);
 
-        local is_committee_transition: felt;
-        if (previous_term == current_term) {
-            is_committee_transition = 0;
-        } else {
-            is_committee_transition = 1;
-        }
+    // if (is_genesis == 1) {
+    //     with pow2_array, sha256_ptr {
+    //         let (epoch_update_output) = handle_genesis_case(epoch_update);
+    //     }
+    //     let next_committee_hash = Uint256(low=0x0, high=0x0);
+    //     assert is_committee_update = 0;
+    //     write_circuit_output(epoch_output=epoch_update_output, next_committee_hash=next_committee_hash, is_committee_transition=0);
 
-        print_string('is_committee_transition');
-        print_felt_hex(is_committee_transition);
+    //     SHA256.finalize(sha256_start_ptr=sha256_ptr_start, sha256_end_ptr=sha256_ptr);
 
-        with pow2_array, sha256_ptr {
-            let (epoch_update_output, next_committee_hash) = handle_recursive_case(epoch_update, program_hash, is_committee_transition, expected_proof_output);
-        }
-        print_string('confirmed epoch');
+    //     return ();
+    // } else {
+    //     print_string('recursive case');
 
-        if (is_committee_update == 1) {
-            print_string('committee update');
-            // sanity check: next_committee_hash should be 0x0 if we update
-            assert next_committee_hash.low = 0x0;
-            assert next_committee_hash.high = 0x0;
+    //     local expected_proof_output: CircuitOutput;
+    //     %{ load_expected_proof_output() %}
 
-            let (committee_keys_root: felt*) = alloc();
-            let (path: felt**) = alloc();
-            local path_len: felt;
-            local aggregate_committee_key: UInt384;
+    //     let (previous_term, _) = felt_divmod(expected_proof_output.beacon_height, SYNC_COMMITTEE_PERIOD);
+    //     let (current_term, _) = felt_divmod(epoch_update.header.slot.low, SYNC_COMMITTEE_PERIOD);
+
+    //     local is_committee_transition: felt;
+    //     if (previous_term == current_term) {
+    //         is_committee_transition = 0;
+    //     } else {
+    //         is_committee_transition = 1;
+    //     }
+
+    //     print_string('is_committee_transition');
+    //     print_felt_hex(is_committee_transition);
+
+    //     with pow2_array, sha256_ptr {
+    //         let (epoch_update_output, next_committee_hash) = handle_recursive_case(epoch_update, program_hash, is_committee_transition, expected_proof_output);
+    //     }
+    //     print_string('confirmed epoch');
+
+    //     if (is_committee_update == 1) {
+    //         print_string('committee update');
+    //         // sanity check: next_committee_hash should be 0x0 if we update
+    //         assert next_committee_hash.low = 0x0;
+    //         assert next_committee_hash.high = 0x0;
+
+    //         let (committee_keys_root: felt*) = alloc();
+    //         let (path: felt**) = alloc();
+    //         local path_len: felt;
+    //         local aggregate_committee_key: UInt384;
             
-            %{ write_committee_update_inputs() %}
-            with pow2_array, sha256_ptr {
-                let (state_root, new_next_committee_hash) = run_committee_update(
-                    committee_keys_root=committee_keys_root,
-                    path=path,
-                    path_len=path_len,
-                    aggregate_committee_key=aggregate_committee_key,
-                    slot=epoch_update_output.beacon_height
-                );
-            }
-            print_string('committee update done');
+    //         %{ write_committee_update_inputs() %}
+    //         with pow2_array, sha256_ptr {
+    //             let (state_root, new_next_committee_hash) = run_committee_update(
+    //                 committee_keys_root=committee_keys_root,
+    //                 path=path,
+    //                 path_len=path_len,
+    //                 aggregate_committee_key=aggregate_committee_key,
+    //                 slot=epoch_update_output.beacon_height
+    //             );
+    //         }
+    //         print_string('committee update done');
 
-            // Ensure a valid state root is used to decommit new next_committee_hash
-            assert epoch_update_output.beacon_state_root.low = state_root.low;
-            assert epoch_update_output.beacon_state_root.high = state_root.high;
-            write_circuit_output(epoch_output=epoch_update_output, next_committee_hash=new_next_committee_hash, is_committee_transition=is_committee_transition);
+    //         // Ensure a valid state root is used to decommit new next_committee_hash
+    //         assert epoch_update_output.beacon_state_root.low = state_root.low;
+    //         assert epoch_update_output.beacon_state_root.high = state_root.high;
+    //         write_circuit_output(epoch_output=epoch_update_output, next_committee_hash=new_next_committee_hash, is_committee_transition=is_committee_transition);
 
-            SHA256.finalize(sha256_start_ptr=sha256_ptr_start, sha256_end_ptr=sha256_ptr);
-            return ();
-        } else {
-            print_string('no committee update');
-            write_circuit_output(epoch_output=epoch_update_output, next_committee_hash=next_committee_hash, is_committee_transition=is_committee_transition);
+    //         SHA256.finalize(sha256_start_ptr=sha256_ptr_start, sha256_end_ptr=sha256_ptr);
+    //         return ();
+    //     } else {
+    //         print_string('no committee update');
+    //         write_circuit_output(epoch_output=epoch_update_output, next_committee_hash=next_committee_hash, is_committee_transition=is_committee_transition);
             
-            SHA256.finalize(sha256_start_ptr=sha256_ptr_start, sha256_end_ptr=sha256_ptr);
-            return ();
-        }
-    }
+    //         SHA256.finalize(sha256_start_ptr=sha256_ptr_start, sha256_end_ptr=sha256_ptr);
+    //         return ();
+    //     }
+    // }
 }
 
 func handle_recursive_case{

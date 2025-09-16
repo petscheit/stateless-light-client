@@ -391,7 +391,18 @@ impl EpochUpdate {
         sync_aggregate: &SyncAggregate,
         validator_pubs: &SyncCommitteeValidatorPubs,
     ) -> Vec<G1Affine> {
+        println!("aggregate pub: {:?}", validator_pubs.aggregate_pub);
         let bits = Self::convert_bits_to_bool_array(&sync_aggregate.sync_committee_bits);
+        let signers: Vec<G1Point> = validator_pubs
+            .validator_pubs
+            .iter()
+            .map(|pubkey| G1Point(*pubkey))
+            .collect();
+
+        let json = serde_json::to_string(&signers).unwrap();
+        fs::write("signers.json", json).unwrap();
+        println!("signers: {:?}", signers);
+            
         validator_pubs
             .validator_pubs
             .iter()

@@ -18,6 +18,7 @@ pub(crate) mod sha256 {
         leaf: FixedBytes<32>,
         index: u64,
     ) -> FixedBytes<32> {
+        println!("_____________________Hashing!!!!!");
         let mut value = leaf;
         let mut data = [0u8; 64];
         let mut g_index = index;
@@ -26,9 +27,13 @@ pub(crate) mod sha256 {
         while let Some(sibling) = witness.pop() {
             if g_index % 2 == 0 {
                 // left node
+                println!("Case 1: left node - {:?}", value);
+                println!("Case 1: right node - {:?}", sibling);
                 data[0..32].copy_from_slice(value.as_slice());
                 data[32..64].copy_from_slice(sibling.as_slice());
             } else {
+                println!("Case 2: right node - {:?}", sibling);
+                println!("Case 2: left node - {:?}", value);
                 data[0..32].copy_from_slice(sibling.as_slice());
                 data[32..64].copy_from_slice(value.as_slice());
             }
