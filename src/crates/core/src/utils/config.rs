@@ -7,7 +7,7 @@ pub struct BankaiConfig {
 impl Default for BankaiConfig {
     fn default() -> Self {
         Self {
-            atlantic_endpoint: "https://staging.atlantic.api.herodotus.cloud".to_string(),
+            atlantic_endpoint: "https://atlantic.api.herodotus.cloud".to_string(),
             database_url: "sqlite:./sqlite_state/bankai.db".to_string(),
         }
     }
@@ -16,7 +16,7 @@ impl Default for BankaiConfig {
 impl BankaiConfig {
     pub fn docker_config() -> Self {
         Self {
-            atlantic_endpoint: "https://staging.atlantic.api.herodotus.cloud".to_string(),
+            atlantic_endpoint: "https://atlantic.api.herodotus.cloud".to_string(),
             database_url: "sqlite:./sqlite_state/bankai.db".to_string(),
         }
     }

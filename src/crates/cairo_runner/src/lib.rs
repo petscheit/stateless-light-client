@@ -45,7 +45,10 @@ fn load_program(path: &str) -> Result<Program, Error> {
     Ok(program)
 }
 
-pub fn run_committee_update(path: &str, update: CommitteeUpdateDataCairo) -> Result<CairoPie, Error> {
+pub fn run(
+    path: &str,
+    update: RecursiveEpochUpdateCairo,
+) -> Result<CairoPie, Error> {
     let program = load_program(path)?;
     let cairo_run_config = cairo_run::CairoRunConfig {
         allow_missing_builtins: Some(true),
@@ -61,6 +64,8 @@ pub fn run_committee_update(path: &str, update: CommitteeUpdateDataCairo) -> Res
         &mut hint_processor,
         exec_scopes,
     )?;
+
+    tracing::info!("{:?}", cairo_runner.get_execution_resources());
     Ok(cairo_runner.get_cairo_pie()?)
 }
 

@@ -4,13 +4,12 @@ use crate::{
     hint_processor::CustomHintProcessor,
     types::{Bytes32, Felt, G1PointCairo, G2PointCairo, UInt384, Uint256, Uint256Bits32},
 };
+use beacon_types::TreeHash;
 use beacon_types::{ExecutionPayloadHeader, MainnetEthSpec};
 use cairo_vm::{
     hint_processor::builtin_hint_processor::{
         builtin_hint_processor_definition::HintProcessorData,
-        hint_utils::{
-            get_ptr_from_var_name, get_relocatable_from_var_name,
-        },
+        hint_utils::{get_ptr_from_var_name, get_relocatable_from_var_name},
     },
     types::{exec_scope::ExecutionScopes, relocatable::Relocatable},
     vm::{errors::hint_errors::HintError, vm_core::VirtualMachine},
@@ -18,7 +17,6 @@ use cairo_vm::{
 };
 use garaga_zero::types::CairoType;
 use serde::{Deserialize, Serialize};
-use beacon_types::TreeHash;
 use serde_json::Value;
 
 #[derive(Debug, Deserialize)]
@@ -35,24 +33,31 @@ pub struct RecursiveEpochOutputsCairo {
     pub n_signers: Felt,
     pub execution_header_root: Uint256,
     pub execution_header_height: Felt,
-    pub current_committee_hash: Uint256,
-    pub next_committee_hash: Uint256,
+    pub current_validator_root: Felt,
+    pub next_validator_root: Felt,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct RecursiveEpochInputsCairo {
     pub epoch_update: EpochUpdateCairo,
-    pub sync_committee_update: Option<SyncCommitteeDataCairo>,
+    pub sync_committee_update: Option<CommitteeUpdateDataCairo>,
     pub stark_proof: Option<Value>, // this is the stark proof of the previous epoch update
     pub stark_proof_output: Option<RecursiveEpochOutputsCairo>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SignerDataCairo {
+    pub validator_root: Felt,
+    pub signers: Vec<G1PointCairo>,
+    pub indexes: Vec<Felt>,
+    pub proofs: Vec<Vec<Felt>>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct EpochUpdateCairo {
     pub header: BeaconHeaderCairo,
     pub signature_point: G2PointCairo,
-    pub aggregate_pub: G1PointCairo,
-    pub non_signers: Vec<G1PointCairo>,
+    pub signer_data: SignerDataCairo,
     pub execution_header_proof: ExecutionHeaderProofCairo,
 }
 
@@ -88,9 +93,9 @@ impl ExecutionPayloadHeaderCairo {
 
         // Convert u64 to padded bytes
         fn u64_to_uint256(value: u64) -> Bytes32 {
-            println!("Value: {}", value);
+            // println!("Value: {}", value);
             let res = Bytes32::from_u64(value);
-            println!("Res: {:?}", hex::encode(res.0));
+            // println!("Res: {:?}", hex::encode(res.0));
             res
         }
 
@@ -144,7 +149,6 @@ impl ExecutionPayloadHeaderCairo {
     }
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct SyncCommitteeDataCairo {
     pub beacon_slot: Felt,
@@ -169,111 +173,110 @@ pub const HINT_WRITE_COMMITTEE_UPDATE_INPUTS: &str = r#"write_committee_update_i
 pub const HINT_WRITE_EXPECTED_PROOF_OUTPUT: &str = r#"load_expected_proof_output()"#;
 
 impl CustomHintProcessor {
-    
-    // pub fn write_epoch_update_inputs(
-    //     &self,
-    //     vm: &mut VirtualMachine,
-    //     _exec_scopes: &mut ExecutionScopes,
-    //     hint_data: &HintProcessorData,
-    //     _constants: &HashMap<String, Felt252>,
-    // ) -> Result<(), HintError> {
-    //     let epoch_update = &self.recursive_epoch_update.inputs.epoch_update;
-    //     let epoch_update_ptr = get_relocatable_from_var_name(
-    //         "epoch_update",
-    //         vm,
-    //         &hint_data.ids_data,
-    //         &hint_data.ap_tracking,
-    //     )?;
-    //     write_epoch_update(epoch_update_ptr, epoch_update, vm)?;
+    pub fn write_epoch_update_inputs(
+        &self,
+        vm: &mut VirtualMachine,
+        _exec_scopes: &mut ExecutionScopes,
+        hint_data: &HintProcessorData,
+        _constants: &HashMap<String, Felt252>,
+    ) -> Result<(), HintError> {
+        let epoch_update = &self.recursive_epoch_update.inputs.epoch_update;
+        let epoch_update_ptr = get_relocatable_from_var_name(
+            "epoch_update",
+            vm,
+            &hint_data.ids_data,
+            &hint_data.ap_tracking,
+        )?;
+        write_epoch_update(epoch_update_ptr, epoch_update, vm)?;
 
-    //     let is_genesis_ptr = get_relocatable_from_var_name(
-    //         "is_genesis",
-    //         vm,
-    //         &hint_data.ids_data,
-    //         &hint_data.ap_tracking,
-    //     )?;
-    //     let is_genesis = match &self.recursive_epoch_update.inputs.stark_proof {
-    //         Some(_) => 0,
-    //         None => 1,
-    //     };
-    //     vm.insert_value(is_genesis_ptr, Felt252::from(is_genesis))?;
+        let is_genesis_ptr = get_relocatable_from_var_name(
+            "is_genesis",
+            vm,
+            &hint_data.ids_data,
+            &hint_data.ap_tracking,
+        )?;
+        let is_genesis = match &self.recursive_epoch_update.inputs.stark_proof {
+            Some(_) => 0,
+            None => 1,
+        };
+        vm.insert_value(is_genesis_ptr, Felt252::from(is_genesis))?;
 
-    //     let is_committee_update_ptr = get_relocatable_from_var_name(
-    //         "is_committee_update",
-    //         vm,
-    //         &hint_data.ids_data,
-    //         &hint_data.ap_tracking,
-    //     )?;
-    //     let is_committee_update = match &self.recursive_epoch_update.inputs.sync_committee_update {
-    //         Some(_) => 1,
-    //         None => 0,
-    //     };
-    //     vm.insert_value(is_committee_update_ptr, Felt252::from(is_committee_update))?;
-        
-    //     let program_hash_ptr = get_relocatable_from_var_name(
-    //         "program_hash",
-    //         vm,
-    //         &hint_data.ids_data,
-    //         &hint_data.ap_tracking,
-    //     )?;
-    //     let program_hash = Felt252::from_hex_unchecked(
-    //         "0x6305ea579daa2cd35f92ce5c41fa3467a7b44c4d69f9849844aff9d552620e",
-    //     );
-    //     vm.insert_value(program_hash_ptr, program_hash)?;
+        let is_committee_update_ptr = get_relocatable_from_var_name(
+            "is_committee_update",
+            vm,
+            &hint_data.ids_data,
+            &hint_data.ap_tracking,
+        )?;
+        let is_committee_update = match &self.recursive_epoch_update.inputs.sync_committee_update {
+            Some(_) => 1,
+            None => 0,
+        };
+        vm.insert_value(is_committee_update_ptr, Felt252::from(is_committee_update))?;
 
-    //     Ok(())
-    // }
+        let program_hash_ptr = get_relocatable_from_var_name(
+            "program_hash",
+            vm,
+            &hint_data.ids_data,
+            &hint_data.ap_tracking,
+        )?;
+        let program_hash = Felt252::from_hex_unchecked(
+            "0x2885215d4e1f442745d215aebeeff442afbdc1d6004d6f6ec9642e9fee2686f",
+        );
+        vm.insert_value(program_hash_ptr, program_hash)?;
 
-    // pub fn write_expected_proof_output(
-    //     &self,
-    //     vm: &mut VirtualMachine,
-    //     _exec_scopes: &mut ExecutionScopes,
-    //     hint_data: &HintProcessorData,
-    //     _constants: &HashMap<String, Felt252>,
-    // ) -> Result<(), HintError> {
+        Ok(())
+    }
 
-    //     let expected_output_ptr = get_relocatable_from_var_name(
-    //         "expected_proof_output",
-    //         vm,
-    //         &hint_data.ids_data,
-    //         &hint_data.ap_tracking,
-    //     )?;
-        
-    //     // Now write the struct data to the new segment
-    //     let values = &self.recursive_epoch_update.inputs.stark_proof_output.as_ref().unwrap();
+    pub fn write_expected_proof_output(
+        &self,
+        vm: &mut VirtualMachine,
+        _exec_scopes: &mut ExecutionScopes,
+        hint_data: &HintProcessorData,
+        _constants: &HashMap<String, Felt252>,
+    ) -> Result<(), HintError> {
 
-    //     let mut current_ptr = expected_output_ptr;
-    //     current_ptr = values.beacon_header_root.to_memory(vm, current_ptr)?;
-    //     current_ptr = values.beacon_state_root.to_memory(vm, current_ptr)?;
-    //     current_ptr = values.beacon_height.to_memory(vm, current_ptr)?;
-    //     current_ptr = values.n_signers.to_memory(vm, current_ptr)?;
-    //     current_ptr = values.execution_header_root.to_memory(vm, current_ptr)?;
-    //     current_ptr = values.execution_header_height.to_memory(vm, current_ptr)?;
-    //     current_ptr = values.current_committee_hash.to_memory(vm, current_ptr)?;
-    //     let _current_ptr = values.next_committee_hash.to_memory(vm, current_ptr)?;
+        let expected_output_ptr = get_relocatable_from_var_name(
+            "expected_proof_output",
+            vm,
+            &hint_data.ids_data,
+            &hint_data.ap_tracking,
+        )?;
 
-    //     Ok(())
-    // }
+        // Now write the struct data to the new segment
+        let values = &self.recursive_epoch_update.inputs.stark_proof_output.as_ref().unwrap();
 
-    // pub fn write_stark_proof_inputs(
-    //     &self,
-    //     _vm: &mut VirtualMachine,
-    //     exec_scopes: &mut ExecutionScopes,
-    //     _hint_data: &HintProcessorData,
-    //     _constants: &HashMap<String, Felt252>,
-    // ) -> Result<(), HintError> {
-    //     if let Some(stark_proof) = &self.recursive_epoch_update.inputs.stark_proof {
-    //         let proof_string = serde_json::json!({
-    //             "proof": stark_proof
-    //         })
-    //         .to_string();
-    //         exec_scopes.insert_value("program_input", proof_string);
-    //     } else {
-    //         panic!("Stark proof not found");
-    //     }
+        let mut current_ptr = expected_output_ptr;
+        current_ptr = values.beacon_header_root.to_memory(vm, current_ptr)?;
+        current_ptr = values.beacon_state_root.to_memory(vm, current_ptr)?;
+        current_ptr = values.beacon_height.to_memory(vm, current_ptr)?;
+        current_ptr = values.n_signers.to_memory(vm, current_ptr)?;
+        current_ptr = values.execution_header_root.to_memory(vm, current_ptr)?;
+        current_ptr = values.execution_header_height.to_memory(vm, current_ptr)?;
+        current_ptr = values.current_validator_root.to_memory(vm, current_ptr)?;
+        let _current_ptr = values.next_validator_root.to_memory(vm, current_ptr)?;
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
+
+    pub fn write_stark_proof_inputs(
+        &self,
+        _vm: &mut VirtualMachine,
+        exec_scopes: &mut ExecutionScopes,
+        _hint_data: &HintProcessorData,
+        _constants: &HashMap<String, Felt252>,
+    ) -> Result<(), HintError> {
+        if let Some(stark_proof) = &self.recursive_epoch_update.inputs.stark_proof {
+            let proof_string = serde_json::json!({
+                "proof": stark_proof
+            })
+            .to_string();
+            exec_scopes.insert_value("program_input", proof_string);
+        } else {
+            panic!("Stark proof not found");
+        }
+
+        Ok(())
+    }
 
     pub fn write_committee_update_data(
         &self,
@@ -282,7 +285,7 @@ impl CustomHintProcessor {
         hint_data: &HintProcessorData,
         _constants: &HashMap<String, Felt252>,
     ) -> Result<(), HintError> {
-        let committee_update_data = &self.committee_update_data;
+        let committee_update_data = &self.recursive_epoch_update.inputs.sync_committee_update.as_ref().unwrap();
 
         let ptr = get_relocatable_from_var_name(
             "committee_update_data",
@@ -302,11 +305,7 @@ impl CustomHintProcessor {
         let ptr = (ptr + 1)?;
         println!("path ptr: {:?}", ptr);
 
-        for (i, branch) in committee_update_data
-            .path
-            .iter()
-            .enumerate()
-        {
+        for (i, branch) in committee_update_data.path.iter().enumerate() {
             let branch_segment = vm.add_memory_segment();
             branch.to_memory(vm, branch_segment)?;
             vm.insert_value((path_ptr + i)?, branch_segment)?;
@@ -316,7 +315,9 @@ impl CustomHintProcessor {
         vm.insert_value(ptr, path_len)?;
         let ptr = (ptr + 1)?;
 
-        let ptr = committee_update_data.next_aggregate_sync_committee.to_memory(vm, ptr)?;
+        let ptr = committee_update_data
+            .next_aggregate_sync_committee
+            .to_memory(vm, ptr)?;
         let mut validator_pubs_ptr = vm.add_memory_segment();
         vm.insert_value(ptr, validator_pubs_ptr)?;
         let ptr = (ptr + 1)?;
@@ -329,8 +330,10 @@ impl CustomHintProcessor {
         vm.insert_value(ptr, committee_keys_root_ptr)?;
 
         // let ptr = (ptr + 1)?;
-        
-        committee_update_data.committee_keys_root.to_memory(vm, committee_keys_root_ptr)?;
+
+        committee_update_data
+            .committee_keys_root
+            .to_memory(vm, committee_keys_root_ptr)?;
         // println!("committee keys root ptr: {:?}", ptr);
 
         // println!("end ptr: {:?}", ptr);
@@ -397,7 +400,6 @@ impl CustomHintProcessor {
     //         panic!("Committee input not found");
     //     }
     // }
-    
 }
 
 pub fn write_epoch_update(
@@ -442,22 +444,53 @@ fn write_signer_data(
     circuit_inputs: &EpochUpdateCairo,
 ) -> Result<Relocatable, HintError> {
     // Write aggregate public key
-    ptr = circuit_inputs.aggregate_pub.to_memory(vm, ptr)?;
+    ptr = circuit_inputs.signer_data.validator_root.to_memory(vm, ptr)?;
 
     // Create segment for non-signers and store its pointer
-    let non_signers_segment = vm.add_memory_segment();
-    vm.insert_value(ptr, non_signers_segment)?;
+    let signers_segment = vm.add_memory_segment();
+    vm.insert_value(ptr, signers_segment)?;
+    ptr = (ptr + 1)?;
 
     // Write all non-signers to the segment
-    let mut segment_ptr = non_signers_segment;
-    for non_signer in &circuit_inputs.non_signers {
-        segment_ptr = non_signer.to_memory(vm, segment_ptr)?;
+    let mut segment_ptr = signers_segment;
+    for signer in &circuit_inputs.signer_data.signers {
+        segment_ptr = signer.to_memory(vm, segment_ptr)?;
     }
 
-    // Store the length of non-signers
-    vm.insert_value((ptr + 1)?, Felt252::from(circuit_inputs.non_signers.len()))?;
+    let indexes_segment = vm.add_memory_segment();
+    vm.insert_value(ptr, indexes_segment)?;
+    ptr = (ptr + 1)?;
 
-    Ok((ptr + 2)?)
+    let mut segment_ptr = indexes_segment;
+    for index in &circuit_inputs.signer_data.indexes {
+        segment_ptr = index.to_memory(vm, segment_ptr)?;
+    }
+
+    let proofs_segment = vm.add_memory_segment();
+    vm.insert_value(ptr, proofs_segment)?;
+    ptr = (ptr + 1)?;
+
+    let mut segment_ptr = proofs_segment;
+    for proof in &circuit_inputs.signer_data.proofs {
+        let proof_segment = vm.add_memory_segment();
+        // Write the pointer to this proof segment in the proofs_segment array
+        vm.insert_value(segment_ptr, proof_segment)?;
+        segment_ptr = (segment_ptr + 1)?;
+        // Write the proof (Vec<Felt>) into the proof_segment
+        let mut proof_ptr = proof_segment;
+        for felt in proof {
+            proof_ptr = felt.to_memory(vm, proof_ptr)?;
+        }
+    }
+
+    vm.insert_value(ptr, Felt252::from(circuit_inputs.signer_data.proofs[0].len()))?;
+    ptr = (ptr + 1)?;
+
+    // Store the length of signers
+    vm.insert_value(ptr, Felt252::from(circuit_inputs.signer_data.signers.len()))?;
+    ptr = (ptr + 1)?;
+
+    Ok(ptr)
 }
 
 fn write_execution_header_proof(

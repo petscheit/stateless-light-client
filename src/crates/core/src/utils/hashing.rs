@@ -11,7 +11,7 @@ pub fn get_committee_hash(point: G1Affine) -> FixedBytes<32> {
     FixedBytes::from_slice(&hasher.finalize())
 }
 
-pub fn validator_commitment(pubkey: G1Affine) -> (FixedBytes<32>, G1Affine) {
+pub fn validator_commitment(pubkey: G1Affine) -> FixedBytes<32> {
     let uncompressed = pubkey.to_uncompressed();
     let bytes = uncompressed.as_ref();
 
@@ -26,7 +26,7 @@ pub fn validator_commitment(pubkey: G1Affine) -> (FixedBytes<32>, G1Affine) {
 
     let commitment = poseidon_hash_many(&felts);
 
-    (FixedBytes::from_slice(&commitment.to_bytes_be()), pubkey)
+    FixedBytes::from_slice(&commitment.to_bytes_be())
 }
 
 mod test {
@@ -42,8 +42,14 @@ mod test {
             "x": "0x0c9fefe233d0d657349b7efcdc368f5aaead27071d224af780874751e7d241f6b88f7650fbb4133043b24bbebc12aa48",
             "y": "0x090e44d00b3be51c48930e4633678dd226222a2854affffa15d878cbf62af49de2f7954c455ffe859aebc5157303cd33"
         })).unwrap();
-        let (commitment, _pubkey) = validator_commitment(point_1.0);
-        assert_eq!(commitment, FixedBytes::from_slice(&hex::decode("04fae68b767518d649045de18a1254e78a384b5d14492cf2236f205e7c1612c7").unwrap()));
+        let commitment = validator_commitment(point_1.0);
+        assert_eq!(
+            commitment,
+            FixedBytes::from_slice(
+                &hex::decode("04fae68b767518d649045de18a1254e78a384b5d14492cf2236f205e7c1612c7")
+                    .unwrap()
+            )
+        );
     }
 
     #[test]
@@ -52,13 +58,18 @@ mod test {
             "x": "0x08158d759eafd2205c770f166829fd61e8f17b2c13f440777eaf45f4d88a6e2028bc507680ff435882d5fb462f813735",
             "y": "0x037e44b677e72dbc6a9bdc8868ace739b4985c6a5f8fedd6a8fe8f24e608584c4ee66897ac677b1cb28dcf98e157244c"
         })).unwrap();
-        let (commitment, _pubkey) = validator_commitment(point_2.0);
-        assert_eq!(commitment, FixedBytes::from_slice(&hex::decode("065e055373e33abaf70d0bbcdfb9d844ca01cc17ac0029dd94c3cce4eeb1569e").unwrap()));
+        let commitment = validator_commitment(point_2.0);
+        assert_eq!(
+            commitment,
+            FixedBytes::from_slice(
+                &hex::decode("065e055373e33abaf70d0bbcdfb9d844ca01cc17ac0029dd94c3cce4eeb1569e")
+                    .unwrap()
+            )
+        );
     }
 }
 
 // Steps:
-
 
 // When new committee is decommited:
 // 1. Decommit each key from committee root in beacon state
@@ -72,13 +83,8 @@ mod test {
 // 3. run merkle inclusion proof
 // 4. add all signers together to verify signature
 
-
-
 // Open Questions:
 // 1. Should we hash the entire pubKey or compressed one?
 // 2. how do we hash the pubKey, need to serialize it! Poseidon is annoying to work with
 
-
 // -> G1 Key: (Uint384, Uint384) -> so 8 felt252. this is manageable
-
-

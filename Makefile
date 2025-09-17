@@ -9,7 +9,7 @@ build-cairo:
 	./scripts/cairo_compile.sh cairo/src/recursive_update.cairo
 
 build-signer:
-	./scripts/cairo_compile.sh cairo/src/signer_new.cairo
+	./scripts/cairo_compile.sh cairo/src/signer.cairo
 
 get-program-hash:
 	# @make build

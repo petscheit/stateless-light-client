@@ -1,10 +1,19 @@
 from definitions import G1Point, G2Point, UInt384
 from starkware.cairo.common.uint256 import Uint256
 
-struct SignerData {
-    committee_pub: G1Point,
-    non_signers: G1Point*,
-    n_non_signers: felt,
+// struct SignerData {
+//     committee_pub: G1Point,
+//     non_signers: G1Point*,
+//     n_non_signers: felt,
+// }
+
+struct SignerDataNew {
+    validator_root: felt,
+    signers: G1Point*,
+    indexes: felt*,
+    proofs: felt**,
+    proofs_len: felt,
+    n_signers: felt,
 }
 
 struct ExecutionHeaderProof {
@@ -26,7 +35,7 @@ struct BeaconHeader {
 struct EpochUpdate {
     sig_point: G2Point,
     header: BeaconHeader,
-    signer_data: SignerData,
+    signer_data: SignerDataNew,
     execution_header_proof: ExecutionHeaderProof,
 }
 
@@ -42,7 +51,7 @@ struct EpochUpdateOutput {
     n_signers: felt,
     execution_header_root: Uint256,
     execution_header_height: felt,
-    current_committee_hash: Uint256,
+    current_validator_root: felt,
 }
 
 struct CircuitOutput {
@@ -52,8 +61,8 @@ struct CircuitOutput {
     n_signers: felt,
     execution_header_root: Uint256,
     execution_header_height: felt,
-    current_committee_hash: Uint256,
-    next_committee_hash: Uint256,
+    current_validator_root: felt,
+    next_validator_root: felt,
 }
 
 struct CommitteeUpdateData {
