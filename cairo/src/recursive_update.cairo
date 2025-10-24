@@ -1,7 +1,7 @@
 %builtins output pedersen range_check bitwise poseidon range_check96 add_mod mul_mod
 
 from starkware.cairo.common.cairo_builtins import PoseidonBuiltin, ModBuiltin, BitwiseBuiltin, HashBuiltin
-// from cairo.src.verify_stone import verify_cairo_proof
+from cairo.src.verify_stone import verify_cairo_proof
 from starkware.cairo.common.uint256 import Uint256
 from starkware.cairo.common.memcpy import memcpy
 from starkware.cairo.common.registers import get_fp_and_pc

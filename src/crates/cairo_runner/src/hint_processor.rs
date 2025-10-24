@@ -1,7 +1,7 @@
 use std::{any::Any, collections::HashMap};
 
 use crate::recursive_epoch::{
-    CommitteeUpdateDataCairo, RecursiveEpochUpdateCairo, HINT_WRITE_EXPECTED_PROOF_OUTPUT,
+    RecursiveEpochUpdateCairo, HINT_WRITE_EXPECTED_PROOF_OUTPUT,
 };
 use cairo_vm::{
     hint_processor::{
@@ -35,7 +35,7 @@ use super::hints;
 //     },
 // };
 use super::recursive_epoch::{
-    HINT_WRITE_COMMITTEE_UPDATE_DATA, HINT_WRITE_COMMITTEE_UPDATE_INPUTS,
+    HINT_WRITE_COMMITTEE_UPDATE_DATA,
     HINT_WRITE_EPOCH_UPDATE_INPUTS, HINT_WRITE_STARK_PROOF_INPUTS,
 };
 

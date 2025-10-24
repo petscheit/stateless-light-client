@@ -5,16 +5,12 @@ use cairo_vm::Felt252;
 use core::convert::TryInto; // add near the top if not in scope
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use starknet_crypto::{poseidon_hash, poseidon_hash_many};
 use thiserror::Error;
 
-use crate::{
-    fetcher::recursive_epoch_input::G1Point,
-    utils::{
+use crate::utils::{
         hashing::{get_committee_hash, validator_commitment},
         merkle::poseidon,
-    },
-};
+    };
 
 /// Represents the public keys of sync committee validators and their aggregate
 #[derive(Debug, Clone)]
@@ -255,7 +251,7 @@ impl CommitteeUpdateData {
     pub fn compute_validator_pub_merkle_tree(
         validator_pubs: Vec<FixedBytes<48>>,
     ) -> FixedBytes<32> {
-        let mut validator_pubs = validator_pubs.clone();
+        let validator_pubs = validator_pubs.clone();
         let validator_points = validator_pubs
             .iter()
             .map(|pubkey| {
@@ -265,8 +261,8 @@ impl CommitteeUpdateData {
             .collect::<Vec<G1Affine>>();
         let validator_commitments = validator_points
             .iter()
-            .map(|point| validator_commitment(point.clone()))
-            .map(|commitment| Felt252::from_bytes_be_slice(&commitment.as_slice()))
+            .map(|point| validator_commitment(*point))
+            .map(|commitment| Felt252::from_bytes_be_slice(commitment.as_slice()))
             .collect::<Vec<Felt252>>();
         // println!("validator_commitments: {:?}", validator_commitments);
 

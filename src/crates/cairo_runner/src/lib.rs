@@ -18,7 +18,6 @@ use recursive_epoch::RecursiveEpochUpdateCairo;
 use std::io;
 use std::{io::Write, path::Path};
 
-use crate::recursive_epoch::CommitteeUpdateDataCairo;
 
 fn load_program(path: &str) -> Result<Program, Error> {
     // Check if it's an absolute path that doesn't exist, try relative
@@ -45,10 +44,7 @@ fn load_program(path: &str) -> Result<Program, Error> {
     Ok(program)
 }
 
-pub fn run(
-    path: &str,
-    update: RecursiveEpochUpdateCairo,
-) -> Result<CairoPie, Error> {
+pub fn run(path: &str, update: RecursiveEpochUpdateCairo) -> Result<CairoPie, Error> {
     let program = load_program(path)?;
     let cairo_run_config = cairo_run::CairoRunConfig {
         allow_missing_builtins: Some(true),
@@ -56,7 +52,8 @@ pub fn run(
         ..Default::default()
     };
     let mut hint_processor = CustomHintProcessor::new(update);
-    let exec_scopes = ExecutionScopes::new();
+    let mut exec_scopes = ExecutionScopes::new();
+    exec_scopes.insert_value("program_object", program.clone());
 
     let cairo_runner = cairo_run_program_with_initial_scope(
         &program,

@@ -9,14 +9,14 @@ use beacon_types::{ExecutionPayloadHeader, MainnetEthSpec};
 use cairo_vm::{
     hint_processor::builtin_hint_processor::{
         builtin_hint_processor_definition::HintProcessorData,
-        hint_utils::{get_ptr_from_var_name, get_relocatable_from_var_name},
+        hint_utils::get_relocatable_from_var_name,
     },
     types::{exec_scope::ExecutionScopes, relocatable::Relocatable},
     vm::{errors::hint_errors::HintError, vm_core::VirtualMachine},
     Felt252,
 };
 use garaga_zero::types::CairoType;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::Value;
 
 #[derive(Debug, Deserialize)]
@@ -94,9 +94,9 @@ impl ExecutionPayloadHeaderCairo {
         // Convert u64 to padded bytes
         fn u64_to_uint256(value: u64) -> Bytes32 {
             // println!("Value: {}", value);
-            let res = Bytes32::from_u64(value);
+            
             // println!("Res: {:?}", hex::encode(res.0));
-            res
+            Bytes32::from_u64(value)
         }
 
         macro_rules! extract_common_fields {
@@ -234,7 +234,6 @@ impl CustomHintProcessor {
         hint_data: &HintProcessorData,
         _constants: &HashMap<String, Felt252>,
     ) -> Result<(), HintError> {
-
         let expected_output_ptr = get_relocatable_from_var_name(
             "expected_proof_output",
             vm,
@@ -243,7 +242,12 @@ impl CustomHintProcessor {
         )?;
 
         // Now write the struct data to the new segment
-        let values = &self.recursive_epoch_update.inputs.stark_proof_output.as_ref().unwrap();
+        let values = &self
+            .recursive_epoch_update
+            .inputs
+            .stark_proof_output
+            .as_ref()
+            .unwrap();
 
         let mut current_ptr = expected_output_ptr;
         current_ptr = values.beacon_header_root.to_memory(vm, current_ptr)?;
@@ -285,7 +289,12 @@ impl CustomHintProcessor {
         hint_data: &HintProcessorData,
         _constants: &HashMap<String, Felt252>,
     ) -> Result<(), HintError> {
-        let committee_update_data = &self.recursive_epoch_update.inputs.sync_committee_update.as_ref().unwrap();
+        let committee_update_data = &self
+            .recursive_epoch_update
+            .inputs
+            .sync_committee_update
+            .as_ref()
+            .unwrap();
 
         let ptr = get_relocatable_from_var_name(
             "committee_update_data",
@@ -444,7 +453,10 @@ fn write_signer_data(
     circuit_inputs: &EpochUpdateCairo,
 ) -> Result<Relocatable, HintError> {
     // Write aggregate public key
-    ptr = circuit_inputs.signer_data.validator_root.to_memory(vm, ptr)?;
+    ptr = circuit_inputs
+        .signer_data
+        .validator_root
+        .to_memory(vm, ptr)?;
 
     // Create segment for non-signers and store its pointer
     let signers_segment = vm.add_memory_segment();
@@ -483,7 +495,10 @@ fn write_signer_data(
         }
     }
 
-    vm.insert_value(ptr, Felt252::from(circuit_inputs.signer_data.proofs[0].len()))?;
+    vm.insert_value(
+        ptr,
+        Felt252::from(circuit_inputs.signer_data.proofs[0].len()),
+    )?;
     ptr = (ptr + 1)?;
 
     // Store the length of signers

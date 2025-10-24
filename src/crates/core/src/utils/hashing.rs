@@ -30,11 +30,11 @@ pub fn validator_commitment(pubkey: G1Affine) -> FixedBytes<32> {
 }
 
 mod test {
-    use serde::Deserialize;
+    
 
-    use crate::fetcher::recursive_epoch_input::G1Point;
+    
 
-    use super::*;
+    
 
     #[test]
     fn test_validator_commitment() {

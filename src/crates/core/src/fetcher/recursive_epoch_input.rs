@@ -10,10 +10,10 @@ use crate::clients::beacon_chain::BeaconRpcClient;
 use crate::clients::ClientError;
 use crate::fetcher::execution_header_input::ExecutionHeaderError;
 use crate::fetcher::sync_committee_input::{
-    CommitteeUpdateData, SyncCommitteeData, SyncCommitteeValidatorPubs,
+    CommitteeUpdateData, SyncCommitteeValidatorPubs,
 };
 use crate::utils::constants;
-use crate::utils::hashing::{get_committee_hash, validator_commitment};
+use crate::utils::hashing::validator_commitment;
 use crate::utils::merkle::poseidon;
 use crate::{
     clients::beacon_chain::BeaconError, fetcher::execution_header_input::ExecutionHeaderProof,
@@ -139,15 +139,17 @@ impl From<RecursiveEpochInputs> for RecursiveEpochOutput {
                         None => {
                             println!("No sync committee update");
                             (
-                            stark_proof_output.current_validator_root,
-                            stark_proof_output.next_validator_root,
-                        )},
+                                stark_proof_output.current_validator_root,
+                                stark_proof_output.next_validator_root,
+                            )
+                        }
                         Some(sync_committee_update) => {
                             println!("Sync committee update");
                             (
-                            stark_proof_output.current_validator_root,
-                            sync_committee_update.expected_validator_root,
-                        )},
+                                stark_proof_output.current_validator_root,
+                                sync_committee_update.expected_validator_root,
+                            )
+                        }
                     }
                 } else {
                     println!("Sync committee transition");
@@ -172,7 +174,7 @@ impl From<RecursiveEpochInputs> for RecursiveEpochOutput {
             beacon_header_root: val.epoch_update.header.tree_hash_root(),
             beacon_state_root: val.epoch_update.header.state_root,
             beacon_height: val.epoch_update.header.slot,
-            n_signers: 512 - val.epoch_update.signer_data.signers.len() as u64,
+            n_signers: val.epoch_update.signer_data.signers.len() as u64,
             execution_header_root: FixedBytes::from_slice(execution_header_hash.0.as_slice()),
             execution_header_height: val
                 .epoch_update
@@ -182,7 +184,7 @@ impl From<RecursiveEpochInputs> for RecursiveEpochOutput {
             current_validator_root,
             next_validator_root,
         };
-        
+
         out
     }
 }
@@ -250,7 +252,7 @@ impl RecursiveEpochInputs {
                             })?;
 
                         serde_json::from_str(&proof.proof)
-                            .map_err(|e| EpochUpdateError::Deserialize(e))?
+                            .map_err(EpochUpdateError::Deserialize)?
                     }
                     None => {
                         return Err(EpochUpdateError::Io(std::io::Error::new(
@@ -497,10 +499,7 @@ impl EpochUpdate {
 }
 
 impl SignerData {
-    fn new(
-        sync_aggregate: &SyncAggregate,
-        validator_pubs: &SyncCommitteeValidatorPubs,
-    ) -> Self {
+    fn new(sync_aggregate: &SyncAggregate, validator_pubs: &SyncCommitteeValidatorPubs) -> Self {
         let bits = Self::convert_bits_to_bool_array(&sync_aggregate.sync_committee_bits);
 
         let signers: Vec<G1Affine> = validator_pubs
@@ -510,9 +509,8 @@ impl SignerData {
             .filter_map(|(i, pubkey)| if bits[i] { Some(*pubkey) } else { None })
             .collect();
 
-        let (validator_root, proofs) = Self::build_validator_tree_and_proofs(
-            validator_pubs.validator_pubs.clone(),
-        );
+        let (validator_root, proofs) =
+            Self::build_validator_tree_and_proofs(validator_pubs.validator_pubs.clone());
         let mut signer_proofs = Vec::new();
         let mut indexes = Vec::new();
         for (i, bit) in bits.iter().enumerate() {
@@ -528,17 +526,15 @@ impl SignerData {
             indexes,
             proofs: signer_proofs,
         }
-
     }
 
     fn build_validator_tree_and_proofs(
         validator_pubs: Vec<G1Affine>,
     ) -> (FixedBytes<32>, Vec<Vec<FixedBytes<32>>>) {
-
         let validator_commitments = validator_pubs
             .iter()
-            .map(|point| validator_commitment(point.clone()))
-            .map(|commitment| Felt252::from_bytes_be_slice(&commitment.as_slice()))
+            .map(|point| validator_commitment(*point))
+            .map(|commitment| Felt252::from_bytes_be_slice(commitment.as_slice()))
             .collect::<Vec<Felt252>>();
 
         let (root, paths) = poseidon::compute_paths(validator_commitments);
