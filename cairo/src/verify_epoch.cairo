@@ -9,12 +9,12 @@ from cairo.src.ssz import SSZ, MerkleTree, MerkleUtils
 from cairo.src.constants import g1_negative
 from cairo.src.domain import Domain, Network
 from cairo.src.signer import (
-    faster_fast_aggregate_signer_pubs,
+    generate_block_signer_pub,
 )
 from cairo.src.utils import pow2alloc128
 from sha import SHA256
 from debug import print_string, print_felt_hex, print_felt
-from cairo.src.types import SignerData, ExecutionHeaderProof, BeaconHeader, EpochUpdate, EpochUpdateOutput
+from cairo.src.types import ExecutionHeaderProof, BeaconHeader, EpochUpdate, EpochUpdateOutput
 
 func run_epoch_update{
     output_ptr: felt*,
@@ -39,8 +39,8 @@ func run_epoch_update{
     let (msg_point) = hash_to_curve(1, signing_root);
 
     // 4. Aggregate signer to get aggregate key that was used to sign the message
-    let (committee_hash, agg_key, n_non_signers) = faster_fast_aggregate_signer_pubs(epoch_update.signer_data);
-    let n_signers = 512 - n_non_signers;
+    let (agg_key) = generate_block_signer_pub(epoch_update.signer_data);
+    let n_signers = epoch_update.signer_data.n_signers;
 
     // 5. Verify signature
     verify_signature(agg_key, msg_point, epoch_update.sig_point);
@@ -65,7 +65,7 @@ func run_epoch_update{
         n_signers=n_signers,
         execution_header_root=execution_hash,
         execution_header_height=execution_height,
-        current_committee_hash=committee_hash,
+        current_validator_root=epoch_update.signer_data.validator_root,
     );
 
     return (output=output);

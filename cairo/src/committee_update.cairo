@@ -9,69 +9,13 @@ from definitions import UInt384
 from cairo.src.domain import Network
 from cairo.src.utils import pow2alloc128, felt_divmod
 from cairo.src.signer import commit_committee_key
-from cairo.src.ssz import MerkleTree
+from cairo.src.ssz import MerkleTree, MerkleUtils
 from sha import SHA256, HashUtils
 from ec_ops import derive_g1_point_from_x
 from debug import print_felt_hex, print_uint384, print_string
-
-// Main function to update the committee
-func main{
-    output_ptr: felt*,
-    pedersen_ptr: HashBuiltin*,
-    range_check_ptr,
-    bitwise_ptr: BitwiseBuiltin*,
-    poseidon_ptr: PoseidonBuiltin*,
-    range_check96_ptr: felt*,
-    add_mod_ptr: ModBuiltin*,
-    mul_mod_ptr: ModBuiltin*,
-}() {
-    alloc_locals;
-
-    // Allocate memory and initialize SHA256
-    let (pow2_array) = pow2alloc128();
-    let (sha256_ptr, sha256_ptr_start) = SHA256.init();
-
-    // Allocate memory for committee keys and path
-    let (committee_keys_root: felt*) = alloc();
-    let (path: felt**) = alloc();
-    local path_len: felt;
-    local aggregate_committee_key: UInt384;
-    local slot: felt;
-
-    %{ write_committee_update_inputs() %}
-
-    let fork = Network.get_fork_version(Network.SEPOLIA, slot);
-    local next_committee_index: felt;
-    if (fork == Network.ELECTRA) {
-        next_committee_index = 87;
-    } else {
-        next_committee_index = 55;
-    }
-
-    // Compute hashes and update state
-    with sha256_ptr, pow2_array {
-        let leaf_hash = compute_leaf_hash(committee_keys_root, aggregate_committee_key);
-        
-        let state_root = MerkleTree.hash_merkle_path(
-            path=path, path_len=path_len, leaf=leaf_hash, index=next_committee_index
-        );
-        let committee_hash = compute_committee_hash(aggregate_committee_key);
-    }
-
-    // Finalize SHA256 and write output
-    SHA256.finalize(sha256_start_ptr=sha256_ptr_start, sha256_end_ptr=sha256_ptr);
-
-    %{ assert_committee_update_result() %}
-
-    assert [output_ptr] = state_root.low;
-    assert [output_ptr + 1] = state_root.high;
-    assert [output_ptr + 2] = committee_hash.low;
-    assert [output_ptr + 3] = committee_hash.high;
-    assert [output_ptr + 4] = slot;
-    let output_ptr = output_ptr + 5;
-
-    return ();
-}
+from cairo.src.types import CommitteeUpdateData
+from cairo.src.signer import validator_commitment
+from cairo.src.merkle import PoseidonMerkleTree
 
 // Compute the leaf hash for the Merkle tree
 func compute_leaf_hash{range_check_ptr, pow2_array: felt*, sha256_ptr: felt*}(
@@ -154,15 +98,11 @@ func run_committee_update{
     pow2_array: felt*,
     sha256_ptr: felt*,
 }(
-    committee_keys_root: felt*,
-    path: felt**,
-    path_len: felt,
-    aggregate_committee_key: UInt384,
-    slot: felt
-) -> (state_root: Uint256, committee_hash: Uint256) {
+    committee_update_data: CommitteeUpdateData
+) -> (state_root: Uint256, validator_tree_root: felt) {
     alloc_locals;
 
-    let fork = Network.get_fork_version(Network.SEPOLIA, slot);
+    let fork = Network.get_fork_version(Network.SEPOLIA, committee_update_data.slot);
     local next_committee_index: felt;
     if (fork == Network.ELECTRA) {
         next_committee_index = 87;
@@ -170,20 +110,111 @@ func run_committee_update{
         next_committee_index = 55;
     }
 
-    let leaf_hash = compute_leaf_hash(committee_keys_root, aggregate_committee_key);
+    let committee_root = compute_committee_root(committee_update_data.validator_pubs);
+    let committee_root_chunks = MerkleUtils.chunk_uint256(committee_root);
+    // compute leaf hash, which is what we decommit in the beacon state
+    let leaf_hash = compute_leaf_hash(committee_root_chunks, committee_update_data.aggregate_committee_key);
     
+    // using path, compute the state root
     let state_root = MerkleTree.hash_merkle_path(
-        path=path, path_len=path_len, leaf=leaf_hash, index=next_committee_index
+        path=committee_update_data.path, path_len=committee_update_data.path_len, leaf=leaf_hash, index=next_committee_index
     );
-    let committee_hash = compute_committee_hash(aggregate_committee_key);
 
-    return (state_root, committee_hash);
+    // we now decompress the validator pubs, hash them using poseidon, and build a poseidon merkle tree out of the keys
+    // we can then use the resulting merkle root to decommit the validator keys
+    let validator_tree_root = build_validator_tree(committee_update_data.validator_pubs);
+
+    return (state_root, validator_tree_root);
 }
 
-struct CircuitInput {
-    beacon_slot: felt,
-    next_sync_committee_branch: Uint256*,
-    next_aggregate_sync_committee: UInt384,
-    committee_keys_root: Uint256,
+
+// In this function, we pass the compressed validator pubs and hash them using sha256, according to the ssz spec
+func compute_committee_root{range_check_ptr,bitwise_ptr: BitwiseBuiltin*, pow2_array: felt*, sha256_ptr: felt*}(
+    committee_keys: UInt384*
+) -> Uint256 {
+    alloc_locals;
+
+    let (ssz_leafs: Uint256*) = alloc();
+    compute_committee_root_inner(committee_keys, 0, ssz_leafs);
+
+    let root = MerkleTree.compute_root(leafs=ssz_leafs, leafs_len=512);
+    print_string('committee root');
+    print_felt_hex(root.low);
+    print_felt_hex(root.high);
+
+    return root;
 }
 
+func compute_committee_root_inner{range_check_ptr, pow2_array: felt*, sha256_ptr: felt*}(
+    committee_keys: UInt384*, counter: felt, result: Uint256*
+) {
+    alloc_locals;
+    if (counter == 512) {
+        return ();
+    }
+
+    let (aggregate_committee_key_chunks) = HashUtils.chunk_uint384(committee_keys[counter]);
+    // Pad the key to 64 bytes
+    memset(dst=aggregate_committee_key_chunks + 12, value=0, n=4);
+    let (aggregate_committee_root) = SHA256.hash_bytes(aggregate_committee_key_chunks, 64);
+
+    let val = MerkleUtils.chunks_to_uint256(aggregate_committee_root);
+
+    assert result[counter] = val;
+    
+    return compute_committee_root_inner(committee_keys, counter + 1, result);
+    
+}
+
+func build_validator_tree{
+    range_check_ptr,
+    bitwise_ptr: BitwiseBuiltin*,
+    range_check96_ptr: felt*,
+    poseidon_ptr: PoseidonBuiltin*,
+    add_mod_ptr: ModBuiltin*,
+    mul_mod_ptr: ModBuiltin*, 
+    pow2_array: felt*
+} (pubs: UInt384*) -> felt {
+    alloc_locals;
+
+    let (commitments: felt*) = alloc();
+    compute_validator_pub_commitments(pubs, 0, commitments);
+
+    let val_root = PoseidonMerkleTree.compute_root(leafs=commitments, leafs_len=512);
+    print_string('val root');
+    print_felt_hex(val_root);
+
+    return val_root;
+} 
+
+// Decompress the validator points, and hash using poseidon, and write to array
+func compute_validator_pub_commitments{
+    range_check_ptr,
+    bitwise_ptr: BitwiseBuiltin*,
+    range_check96_ptr: felt*,
+    poseidon_ptr: PoseidonBuiltin*,
+    add_mod_ptr: ModBuiltin*,
+    mul_mod_ptr: ModBuiltin*, 
+    pow2_array: felt*
+}(
+    pubs: UInt384*, counter: felt, result: felt*
+) {
+    alloc_locals;
+    
+    if (counter == 512) {
+        return ();
+    }
+
+    // Decompress G1 point and perform sanity checks
+    let (flags, x_point) = decompress_g1(pubs[counter]);
+    assert flags.compression_bit = 1;
+    assert flags.infinity_bit = 0;
+
+    let (point) = derive_g1_point_from_x(curve_id=1, x=x_point, s=flags.sign_bit);
+
+    let (commitment) = validator_commitment(point);
+
+    assert result[counter] = commitment;
+
+    return compute_validator_pub_commitments(pubs, counter + 1, result);
+}

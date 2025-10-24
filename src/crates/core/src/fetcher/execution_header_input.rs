@@ -67,9 +67,7 @@ impl ExecutionHeaderProof {
             .into_iter()
             .map(|leaf| FixedBytes::from_slice(leaf.as_slice()))
             .collect();
-
         let leaf = leafs[EXECUTION_PAYLOAD_LEAF_INDEX];
-
         // Sanity Check: verify the merkle proof
         let computed_root = hash_path(path.clone(), leaf, EXECUTION_PAYLOAD_LEAF_INDEX as u64);
         assert_eq!(computed_root.as_slice(), root.as_slice());
